@@ -16,23 +16,34 @@
 - 2026-08-02：完成 Tkinter 验证，确认 Tcl/Tk 实际 patchlevel 8.6.18、Aqua 窗口系统和最小窗口初始化均通过。
 - 2026-08-02：完成 FFmpeg/Rubber Band 环境验证及系统临时目录冒烟测试；WAV、MP3、M4A、FLAC 均可读取，`libmp3lame` 可编码，三阶段 `FFmpeg → Rubber Band → FFmpeg` 处理成功，最终 MP3 可由 ffprobe 识别，临时音频已清理。
 - 2026-08-02：创建 `macos/environment_report.md`、`macos/Brewfile` 和 `macos/requirements-dev.txt`，记录架构、版本、动态链接、许可证、验证证据和可复现步骤；提交 `9f6995f`（`chore: establish macOS development environment`）。
+- 2026-08-03：完成 macOS 用户可见合同确认：输出固定到 `~/Downloads/`；变调为 `-24` 至 `+24` 的整数半音；变速改为 `-95` 至 `+400` 的相对变化百分比，底层换算为 `1 + speed_change / 100`；输出固定为 320 kbps、44.1 kHz、双声道 MP3。
+- 2026-08-03：确认固定双参数命名 `<stem><signed_pitch><signed_speed>%.mp3`，零值不省略；同名文件永不覆盖，弹窗提示后采用 `_2`、`_3` 等自动递增名称；不复制音频元数据。
+- 2026-08-03：确认单应用禁止并发任务，处理期间支持取消；任务运行时关闭窗口需要确认，确认退出后终止子进程、清理临时资源并退出；Downloads 不存在、不可写或磁盘空间不足时弹窗并终止，不自动切换目录。
+- 2026-08-03：提交 `d5de8ae`（`docs: add macOS behavior specification`），创建中文行为规格 `macos/design/behavior_spec.md`，以合同编号固化输入、参数、管线、输出、命名、临时资源、任务和错误规则。
+- 2026-08-03：提交 `c3746ba`（`docs: add macOS architecture plan`），创建中文架构规划 `macos/design/architecture_plan.md`，确定 GUI、控制层、管线、适配器、进程执行、依赖解析、命名、校验和工作区的职责边界。
+- 2026-08-03：提交 `d95593c`（`docs: add macOS verification matrix`），创建中文验证矩阵 `macos/design/verification_matrix.md`，将行为合同映射为单元、集成、GUI、故障注入和打包前检查项。
+- 2026-08-03：提交 `0bf56f4`（`docs: align static contract with confirmed macOS behavior`），同步更新长期静态合同，替换旧速度语义并加入已确认的平台、参数范围、下载目录、命名、输出、单任务、取消、关闭和元数据边界。
+- 2026-08-03：提交 `7cc361e`（`docs: link macOS design contracts`），更新 `macos/README.md`，建立环境报告和三份设计合同的入口索引。
 
 # active step
 
-- 从静态合同和 Windows 历史源码提取 macOS 可测试行为基线，并据此形成正式实现前的行为规格与验证矩阵；本步骤只定义可验证合同，不编写 GUI 或正式业务实现：
-  1. 核对输入格式合同，分别记录 MP3、M4A、WAV、FLAC 的接受条件、验证证据和不在首阶段承诺的格式。
-  2. 明确半音参数语义，包括零值、正负方向、小数支持和待测试边界；明确速度百分比与 Rubber Band tempo/time ratio 的换算语义，不把环境冒烟参数直接当成产品默认值。
-  3. 明确 MP3 输出合同，包括编码结果需要验证的媒体信息、文件名所需参数信息和输出位置的用户可理解性。
-  4. 定义同名输出策略，保证不得无感知覆盖；定义每次处理的独立临时资源、成功/失败/取消后的清理要求，并排除固定下载目录临时文件。
-  5. 建立面向用户和内部诊断的错误类别，覆盖输入、参数、依赖、子进程、文件权限、空间、输出冲突和清理失败等场景。
-  6. 明确排除机器码、激活码、注册机、授权文件及任何访问限制；Windows 激活实现仅作为不应迁移的历史边界。
-  7. 基于行为规格提出 GUI、音频处理、依赖/路径解析、参数校验和错误表示的模块边界，但暂不实现模块。
-  8. 为每条合同建立验证矩阵，列出前置条件、输入、预期结果、失败表现、证据和待确认项；未经验证的选择不得写成既定事实。
+- 根据已确认的行为规格建立非 GUI 单元测试框架和最小核心代码骨架；本步骤只实现不依赖 Tkinter、FFmpeg 或 Rubber Band 的纯逻辑模块，不执行真实音频处理，不编写 GUI，不运行 PyInstaller：
+  1. 进入本地仓库 `/Users/smterpro/Workspace/Tools/AudioShifter/`，确认工作区干净并执行 `git pull --ff-only`。完整阅读 `docs/macos_rebuild_static.md`、`macos/design/behavior_spec.md`、`macos/design/architecture_plan.md`、`macos/design/verification_matrix.md` 和 `macos/environment_report.md`；如本地存在未提交修改、无法快进或文档之间出现冲突，停止并报告，不得 reset、stash 或覆盖。
+  2. 在现有 `macos/.venv/` 中增加并固定最小测试依赖，优先使用 `pytest`；更新 `macos/requirements-dev.txt`，不得升级或重装无关 Homebrew 公式，不得改变已验证的 Python、Tkinter、FFmpeg 或 Rubber Band 环境。
+  3. 建立最小 Python 包和测试目录，建议创建 `macos/src/audioshifter/`、`macos/tests/unit/` 以及必要的包初始化文件；配置导入路径应可重复，避免依赖开发者当前工作目录或手工修改 `PYTHONPATH`。
+  4. 实现 `models.py` 和 `errors.py`：定义不可变的 `ProcessingRequest`、稳定处理阶段、输出分配结果、结构化 `AppError` 及 `behavior_spec.md` 中的错误码。此步骤不实现外部程序适配器，也不添加 Tkinter 类型。
+  5. 实现 `validation.py` 的纯函数：输入扩展名和基础文件状态校验、变调文本解析、变速文本解析、范围检查、Decimal 规范化、`tempo_ratio = 1 + speed_change / 100` 换算、Downloads 基础预检。所有无效输入必须映射到稳定错误码，并在启动任何外部进程前失败。
+  6. 实现 `naming.py` 的纯函数和文件系统分配逻辑：生成 `<stem><signed_pitch><signed_speed>%.mp3`，零值固定保留；规范化小数尾随零；在目标存在时从 `_2` 开始递增；永不覆盖或删除已有文件；返回是否需要冲突提示及实际路径。通过临时目录测试竞态前的基本分配行为，不接入 GUI 弹窗。
+  7. 实现 `workspace.py` 的最小安全工作区抽象：只能在传入或系统临时根目录下创建唯一任务目录，暴露预定中间路径并安全清理；拒绝清理临时根之外或非当前对象创建的路径。当前步骤不运行 FFmpeg，不生成真实音频。
+  8. 实现最小单任务状态保护，可放在独立纯逻辑对象或控制层骨架中：活动任务存在时拒绝第二次启动，结束、失败或取消状态后可以释放。不得在本步骤实现后台线程或 Tkinter 控件更新。
+  9. 按 `verification_matrix.md` 的 ID 编写自动化单元测试，至少覆盖 `PITCH-T001` 至 `PITCH-T013`、`SPEED-T001` 至 `SPEED-T014`、`NAME-T001` 至 `NAME-T012`、`IN-T005` 至 `IN-T010`、`TEMP-T001`、`TEMP-T009`、`TASK-T002` 和 `ERR-T001`。测试名称或参数 ID 应保留矩阵编号，保证合同可追踪。
+  10. 运行完整单元测试并生成简短结果报告，记录 Python/pytest 版本、测试数量、通过/失败/跳过数和尚未实现的矩阵范围。不得为了让测试通过而修改已确认合同；发现合同内部矛盾或无法实现的文件系统语义时停止并向用户说明。
+  11. 复核 Git 范围，只提交 Python 源码、测试、最小测试配置、依赖清单和必要文档；不得提交 `.venv`、缓存、覆盖率临时文件、音频、第三方二进制、`.app`、`.dmg` 或 Windows 文件变更。提交后把结果和短 commit hash 追加到本文件的 `done`，再把真实 FFmpeg/Rubber Band 核心管线实现移为下一 active step。
 
 # next steps
 
-- 根据确认后的行为基线建立不依赖 GUI 的参数、命名、同名输出、临时资源和错误处理测试。
-- 测试合同稳定后实现非 GUI 的 macOS 音频处理核心。
-- 音频处理核心验证通过后接入中文 Tkinter GUI。
-- GUI 和核心验证后执行本地未签名的 arm64 应用包验证；Developer ID 签名和 Apple 公证不在项目范围内。
+- 在纯逻辑测试通过后，实现 `process_runner.py`、`dependencies.py`、`ffmpeg_adapter.py`、`rubberband_adapter.py` 和非 GUI `pipeline.py`，建立真实四格式输入、三阶段处理、取消和清理的集成测试。
+- 非 GUI 核心管线全部 P0 测试通过后，接入中文 Tkinter GUI、主线程事件调度、冲突提示、取消按钮和关闭确认。
+- GUI 和核心验证后执行本地未签名的纯 `arm64` 应用包验证，并解决内置依赖、动态库路径和最低 macOS 版本测试。
+- 正式分发前确定 GPL 兼容或商业许可路线、第三方 notices 和对应源码提供方式。
 - macOS 复刻完成后才开始 `mobile/` 下的 Android 移植。
