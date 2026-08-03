@@ -27,23 +27,511 @@
 
 # active step
 
-- 根据已确认的行为规格建立非 GUI 单元测试框架和最小核心代码骨架；本步骤只实现不依赖 Tkinter、FFmpeg 或 Rubber Band 的纯逻辑模块，不执行真实音频处理，不编写 GUI，不运行 PyInstaller：
-  1. 进入本地仓库 `/Users/smterpro/Workspace/Tools/AudioShifter/`，确认工作区干净并执行 `git pull --ff-only`。完整阅读 `docs/macos_rebuild_static.md`、`macos/design/behavior_spec.md`、`macos/design/architecture_plan.md`、`macos/design/verification_matrix.md` 和 `macos/environment_report.md`；如本地存在未提交修改、无法快进或文档之间出现冲突，停止并报告，不得 reset、stash 或覆盖。
-  2. 在现有 `macos/.venv/` 中增加并固定最小测试依赖，优先使用 `pytest`；更新 `macos/requirements-dev.txt`，不得升级或重装无关 Homebrew 公式，不得改变已验证的 Python、Tkinter、FFmpeg 或 Rubber Band 环境。
-  3. 建立最小 Python 包和测试目录，建议创建 `macos/src/audioshifter/`、`macos/tests/unit/` 以及必要的包初始化文件；配置导入路径应可重复，避免依赖开发者当前工作目录或手工修改 `PYTHONPATH`。
-  4. 实现 `models.py` 和 `errors.py`：定义不可变的 `ProcessingRequest`、稳定处理阶段、输出分配结果、结构化 `AppError` 及 `behavior_spec.md` 中的错误码。此步骤不实现外部程序适配器，也不添加 Tkinter 类型。
-  5. 实现 `validation.py` 的纯函数：输入扩展名和基础文件状态校验、变调文本解析、变速文本解析、范围检查、Decimal 规范化、`tempo_ratio = 1 + speed_change / 100` 换算、Downloads 基础预检。所有无效输入必须映射到稳定错误码，并在启动任何外部进程前失败。
-  6. 实现 `naming.py` 的纯函数和文件系统分配逻辑：生成 `<stem><signed_pitch><signed_speed>%.mp3`，零值固定保留；规范化小数尾随零；在目标存在时从 `_2` 开始递增；永不覆盖或删除已有文件；返回是否需要冲突提示及实际路径。通过临时目录测试竞态前的基本分配行为，不接入 GUI 弹窗。
-  7. 实现 `workspace.py` 的最小安全工作区抽象：只能在传入或系统临时根目录下创建唯一任务目录，暴露预定中间路径并安全清理；拒绝清理临时根之外或非当前对象创建的路径。当前步骤不运行 FFmpeg，不生成真实音频。
-  8. 实现最小单任务状态保护，可放在独立纯逻辑对象或控制层骨架中：活动任务存在时拒绝第二次启动，结束、失败或取消状态后可以释放。不得在本步骤实现后台线程或 Tkinter 控件更新。
-  9. 按 `verification_matrix.md` 的 ID 编写自动化单元测试，至少覆盖 `PITCH-T001` 至 `PITCH-T013`、`SPEED-T001` 至 `SPEED-T014`、`NAME-T001` 至 `NAME-T012`、`IN-T005` 至 `IN-T010`、`TEMP-T001`、`TEMP-T009`、`TASK-T002` 和 `ERR-T001`。测试名称或参数 ID 应保留矩阵编号，保证合同可追踪。
-  10. 运行完整单元测试并生成简短结果报告，记录 Python/pytest 版本、测试数量、通过/失败/跳过数和尚未实现的矩阵范围。不得为了让测试通过而修改已确认合同；发现合同内部矛盾或无法实现的文件系统语义时停止并向用户说明。
-  11. 复核 Git 范围，只提交 Python 源码、测试、最小测试配置、依赖清单和必要文档；不得提交 `.venv`、缓存、覆盖率临时文件、音频、第三方二进制、`.app`、`.dmg` 或 Windows 文件变更。提交后把结果和短 commit hash 追加到本文件的 `done`，再把真实 FFmpeg/Rubber Band 核心管线实现移为下一 active step。
+- 完成 macOS 第一阶段可运行 MVP：按照已确认的行为合同，依次建立纯逻辑模块、真实 FFmpeg/Rubber Band 音频管线、中文 Tkinter GUI 和端到端自检，使用户可以从现有虚拟环境启动程序并使用真实音频文件测试。本步骤允许编写正式业务代码、自动化测试和 GUI，也允许使用用户已手动确认可用的 computer-use/桌面控制能力执行 UI 自检；不执行 PyInstaller 打包，不生成 `.app` 或 `.dmg`，不处理签名、公证和正式分发。
+
+  ## 1. Git、文档与工具前置检查
+
+  1. 进入本地仓库 `/Users/smterpro/Workspace/Tools/AudioShifter/`，执行：
+
+     ```bash
+     git status --short
+     git branch -vv
+     git pull --ff-only
+     ```
+
+     工作区必须干净，`main` 必须正确跟踪 `origin/main`。如存在未提交修改、无法快进、分支分叉或冲突，立即停止并报告；不得执行 `reset`、`stash`、`clean`、强制 checkout 或 force push。
+
+  2. 完整阅读并遵守：
+
+     ```text
+     docs/macos_rebuild_static.md
+     docs/macos_rebuild_runtime.md
+     macos/design/behavior_spec.md
+     macos/design/architecture_plan.md
+     macos/design/verification_matrix.md
+     macos/environment_report.md
+     macos/Brewfile
+     macos/requirements-dev.txt
+     ```
+
+     行为规格优先于实现便利。不得为了让代码或测试通过而修改已确认的参数、输出、命名、不覆盖、取消或错误合同；若文档之间存在无法兼容的冲突，停止并报告。
+
+  3. 不得修改任何 Windows 历史源码、文档、打包配置或 `_local_artifacts`。Windows 代码只作为历史参考，不能复制机器码/激活逻辑、固定 Downloads 临时文件、静默覆盖或 Tkinter 跨线程更新等旧缺陷。
+
+  4. 确认现有环境仍可用，并记录实际版本：
+
+     ```bash
+     macos/.venv/bin/python --version
+     ffmpeg -version
+     ffprobe -version
+     rubberband --version
+     ```
+
+     不主动升级、重装或清理 Homebrew 公式。只允许在 `macos/.venv/` 中增加当前阶段实际需要的 Python 测试依赖。
+
+  5. computer-use/桌面控制插件由用户在任务开始前手动测试和确认。Codex 可以调用已存在且已授权的能力，但不得自行安装插件、修改插件配置、申请额外系统权限或改变 macOS 安全设置。computer-use 用于最终 UI 交互自检，不能替代单元测试、集成测试、文件系统检查和 FFprobe 验证。
+
+  6. 若 computer-use 在实际执行时不可用或失去授权，核心、真实管线和 GUI 开发仍应继续；不得伪造 UI 自检通过。最终报告将 UI 自动操作标记为待人工执行，并提供不超过 10 步的人工验证流程。
+
+  ## 2. 项目结构与可重复运行入口
+
+  1. 建立正式 Python 包与测试结构，原则上采用：
+
+     ```text
+     macos/
+     ├── src/
+     │   └── audioshifter/
+     │       ├── __init__.py
+     │       ├── __main__.py
+     │       ├── models.py
+     │       ├── errors.py
+     │       ├── validation.py
+     │       ├── naming.py
+     │       ├── dependencies.py
+     │       ├── workspace.py
+     │       ├── process_runner.py
+     │       ├── ffmpeg_adapter.py
+     │       ├── rubberband_adapter.py
+     │       ├── pipeline.py
+     │       ├── controller.py
+     │       └── gui.py
+     ├── tests/
+     │   ├── unit/
+     │   └── integration/
+     └── design/
+     ```
+
+     可以根据实现证据少量调整文件数量，但必须保持 `architecture_plan.md` 规定的职责分离和依赖方向。
+
+  2. 配置可重复的包安装和导入方式，不能依赖当前工作目录或手工修改 `PYTHONPATH`。优先使用标准 `pyproject.toml` 与 editable install。
+
+  3. 从源码启动 GUI 的固定入口应为：
+
+     ```bash
+     cd /Users/smterpro/Workspace/Tools/AudioShifter
+     source macos/.venv/bin/activate
+     python -m audioshifter
+     ```
+
+     如采用等价入口，必须同样简短、稳定，并写入 `macos/README.md`。
+
+  4. 在 `macos/requirements-dev.txt` 中加入并固定实际使用的测试依赖，优先使用 `pytest`。不得加入未使用的框架或改变已验证的 Python/Tk/FFmpeg/Rubber Band 组合。
+
+  ## 3. 第一关：纯逻辑模块和单元测试
+
+  1. 实现 `models.py`：
+     - 不可变 `ProcessingRequest`
+     - `ProcessingResult`
+     - 输出路径分配结果
+     - 稳定处理阶段和终止状态
+     - 必要的进度事件数据
+
+  2. 实现 `errors.py`：
+     - 结构化 `AppError`
+     - `behavior_spec.md` 规定的稳定错误码
+     - 面向用户的简洁提示
+     - 内部诊断信息与原始异常链
+
+     不得使用任意异常字符串代替合同错误，也不得在底层模块弹出 Tkinter messagebox。
+
+  3. 实现 `validation.py`：
+     - MP3、M4A、WAV、FLAC 扩展名校验，大小写不敏感
+     - 输入存在、普通文件、非零大小和可读性检查
+     - 变调文本解析：只允许整数，范围 `-24` 至 `+24`
+     - 变速文本解析：允许有限小数，范围 `-95` 至 `+400`
+     - 用户输入不得包含 `%`
+     - 使用 `Decimal` 或等价精确十进制类型保存和格式化速度值
+     - 计算 `tempo_ratio = 1 + speed_change / 100`
+     - Downloads 存在、为目录、可写的基础预检查
+
+     所有无效输入必须在启动任何外部进程前失败并映射到稳定错误码。
+
+  4. 实现 `naming.py`：
+     - 固定命名 `<stem><signed_pitch><signed_speed>%.mp3`
+     - `0` 统一表示为 `+0`
+     - 速度小数去除无意义尾随零
+     - 两个参数永远保留
+     - 基础名存在时依次选择 `_2`、`_3` 等名称
+     - 永不覆盖、删除或重命名已有文件
+     - 返回是否需要冲突提示及实际目标路径
+     - 支持最终写入前重新检查并安全重新分配路径
+
+  5. 实现 `workspace.py`：
+     - 每个任务创建唯一系统临时目录
+     - 提供标准化 WAV 和 Rubber Band 输出 WAV 路径
+     - 不在 Downloads、输入目录或仓库中创建临时音频
+     - 只清理当前对象创建的工作区
+     - 拒绝删除临时根之外或来源不明的路径
+     - 成功、失败和取消均可调用清理
+     - 清理失败形成 warning，不删除已成功输出
+
+  6. 实现最小单任务状态保护：
+     - 活动任务存在时拒绝第二次启动
+     - 成功、失败或取消结束后释放
+     - 请求提交后参数不可被 GUI 修改
+     - 不使用零散的全局可变变量维护任务状态
+
+  7. 按 `verification_matrix.md` 编写单元测试，至少覆盖：
+
+     ```text
+     PITCH-T001 ～ PITCH-T013
+     SPEED-T001 ～ SPEED-T014
+     NAME-T001 ～ NAME-T012
+     IN-T005 ～ IN-T010
+     TEMP-T001
+     TEMP-T009
+     TASK-T002
+     ERR-T001
+     ```
+
+     测试名称或参数化 case 必须保留矩阵 ID，以保证合同可追踪。
+
+  8. 第一关只有在选定的 P0 单元测试全部通过后才能进入真实音频管线。不得通过放宽合同让测试迁就实现。
+
+  ## 4. 第二关：依赖解析与外部进程执行层
+
+  1. 实现 `dependencies.py`：
+     - 开发环境中解析当前 FFmpeg、FFprobe 和 Rubber Band
+     - 为后续 PyInstaller 内置资源保留独立解析策略接口
+     - 验证路径存在、是普通文件且可执行
+     - 不使用 Windows 二进制
+     - 上层模块不得直接依赖 `/opt/homebrew` 固定字符串
+
+  2. 实现 `process_runner.py`：
+     - 只使用参数数组，不执行拼接 Shell 字符串
+     - 捕获 stdout、stderr 和退出码
+     - 保存完整内部诊断，同时生成简洁用户错误
+     - 支持取消当前子进程及其相关子进程
+     - 处理非 UTF-8 输出
+     - 普通取消映射为 `CANCELLED`，不得映射为未知错误
+     - 不导入 Tkinter、不调用 messagebox
+
+  3. 为进程执行层建立隔离测试，至少覆盖：
+     - 成功命令
+     - 非零退出码
+     - 命令不存在
+     - 命令不可执行
+     - stderr 捕获
+     - 取消长时间命令
+     - 取消后无遗留进程
+
+  ## 5. 第三关：真实音频适配器与非 GUI 管线
+
+  1. 实现 `ffmpeg_adapter.py`：
+     - 解码并标准化为 WAV、PCM signed 16-bit little-endian、44.1 kHz、双声道
+     - 使用 `libmp3lame` 编码 320 kbps、44.1 kHz、双声道 MP3
+     - 使用 FFprobe 检查输入媒体和最终输出
+     - 分别映射媒体无效、解码失败、编码失败和输出验证失败
+     - 不复制源文件元数据
+     - 最终输出不得使用静默覆盖行为
+
+  2. 实现 `rubberband_adapter.py`：
+     - 传入整数半音
+     - 传入计算后的 tempo multiplier
+     - 使用 R3/finer 处理方向
+     - 使用 formant preservation
+     - 映射退出码、stderr 和取消状态
+
+  3. 实现 `pipeline.py`，正常状态至少为：
+
+     ```text
+     VALIDATING
+     → PREPARING
+     → DECODING
+     → PROCESSING
+     → ENCODING
+     → VERIFYING
+     → SUCCEEDED
+     ```
+
+     终止状态为 `FAILED` 或 `CANCELLED`。
+
+  4. 管线必须：
+     - 在启动外部进程前完成参数和路径校验
+     - 保护源文件不被修改、移动、重命名或删除
+     - 创建唯一临时工作区
+     - 分配 Downloads 输出路径
+     - 同名时返回冲突提示信息
+     - 编码前再次检查目标路径，防止外部竞态覆盖
+     - 三个处理阶段分别报告状态
+     - 成功后使用 FFprobe 验证最终 MP3
+     - 失败或取消时删除不完整输出
+     - 所有终止路径尽可能清理临时资源
+     - 清理失败不掩盖已经成功生成的结果
+
+  5. 在系统临时目录动态生成短小合成音频，不提交音频文件。建立集成测试，至少覆盖：
+     - MP3、M4A、WAV、FLAC 输入
+     - 大写扩展名
+     - 中文、空格、括号、`&` 等路径
+     - 只变调、只变速、同时变调和变速
+     - `pitch = 0`、`speed = 0`
+     - 变调边界 `-24`、`+24`
+     - 代表性速度值及边界输入可接受性
+     - 固定输出命名和同名 `_2`
+     - 源文件哈希不变
+     - 最终 MP3 编码、码率、采样率、声道和可读性
+     - 时长变化方向与速度合同一致
+     - 损坏音频与伪装扩展名
+     - FFmpeg/Rubber Band 缺失或不可执行
+     - 子进程失败
+     - 取消与临时资源清理
+
+  6. 本阶段不固定未经测试证明的严格音质阈值或精确时长误差阈值，但必须验证处理方向、输出有效性和合同媒体规格。
+
+  7. 第二、三关全部 P0 测试通过后才能进入 GUI。
+
+  ## 6. 第四关：中文 Tkinter GUI
+
+  1. 实现 `controller.py`：
+     - 连接 GUI 与管线
+     - 统一执行单任务互斥
+     - 在后台线程运行管线
+     - 使用线程安全事件队列
+     - 通过 `root.after()` 在 Tkinter 主线程处理状态、结果和错误
+     - 管理取消和运行中关闭应用
+     - GUI 不直接执行子进程或删除临时文件
+
+  2. 实现 `gui.py`，至少提供：
+     - 中文窗口标题和中文操作说明
+     - 文件选择器
+     - 当前输入路径显示
+     - 变调输入
+     - 变速输入，并明确说明其为相对变化百分比、无需输入 `%`
+     - “开始处理”按钮
+     - “取消”按钮
+     - 当前阶段状态
+     - 成功、失败和冲突提示弹窗
+
+  3. 文件选择器只展示 MP3、M4A、WAV 和 FLAC。默认值为：
+
+     ```text
+     变调：0
+     变速：0
+     ```
+
+  4. 处理期间：
+     - 禁止再次启动任务
+     - 启用取消按钮
+     - 界面保持响应
+     - 显示解码、处理、编码和验证等状态
+     - 已提交请求不可受输入框后续变化影响
+
+  5. 同名输出时，弹窗说明：
+     - 原目标已存在
+     - 已有文件不会被覆盖
+     - 本次实际使用的新文件名或完整路径
+
+     用户确认后继续，不要求手工改名。
+
+  6. Downloads 不存在、不是目录、不可写或磁盘空间不足时，弹窗说明具体原因并终止；不自动切换目录。
+
+  7. 成功后显示完整 Downloads 输出路径，并恢复可再次处理状态。
+
+  8. 用户取消时：
+     - 终止当前进程
+     - 不启动后续阶段
+     - 删除不完整输出
+     - 清理临时工作区
+     - 恢复就绪状态
+     - 不显示“未知错误”或“处理失败”替代取消状态
+
+  9. 运行期间关闭窗口时：
+     - 询问是否取消当前任务并退出
+     - 用户拒绝时继续处理
+     - 用户确认时执行完整取消和清理后退出
+     - 不遗留后台进程
+
+  10. GUI 不提供并发、队列、批处理、元数据选项、输出格式选择或自定义输出目录。
+
+  ## 7. 第五关：自动化自检和 computer-use UI 自检
+
+  1. 创建 `macos/mvp_test_report.md`，至少记录：
+     - Python、pytest、FFmpeg、FFprobe 和 Rubber Band 版本
+     - 单元测试与集成测试数量及结果
+     - 失败、跳过和未覆盖项
+     - 已覆盖的验证矩阵 ID
+     - GUI 启动结果
+     - computer-use UI 自检结果
+     - 代表性输出媒体信息
+     - 未解决问题
+     - 最终状态 `PASS`、`PARTIAL` 或 `FAIL`
+
+  2. 运行完整自动化测试：
+
+     ```bash
+     macos/.venv/bin/python -m pytest
+     ```
+
+     所有 P0 单元测试和真实管线集成测试必须通过，才能开始 UI 自检。
+
+  3. 在系统临时目录生成短合成输入，不使用用户私人音频，不提交测试输入或输出。
+
+  4. computer-use 可用时执行完整 UI 自检：
+     - 启动应用并确认中文窗口正常显示
+     - 通过系统文件选择器选择合成音频
+     - 输入变调 `+3`、变速 `-20`
+     - 启动处理并确认界面保持响应、按钮和状态正确变化
+     - 等待成功提示
+     - 确认输出位于 `~/Downloads/`
+     - 确认文件名为 `<stem>+3-20%.mp3`
+     - 使用 FFprobe 验证输出规格
+     - 再次使用相同输入和参数，确认冲突提示及 `_2` 输出
+     - 确认第一份输出未被覆盖，源文件未改变
+     - 仅删除有完整记录且确认属于本轮自检的合成输入和输出
+
+  5. UI 自检还应确认：
+     - 无输入时提示
+     - 变调小数和越界输入被拒绝
+     - 变速带 `%` 和越界输入被拒绝
+     - 重复点击不会产生并发任务
+     - 取消操作恢复界面且无残留进程/临时文件
+     - 运行中关闭窗口出现确认
+
+  6. computer-use 的视觉观察只验证交互，不替代文件系统、哈希、进程状态和 FFprobe 检查。
+
+  7. 若 computer-use 实际不可用：
+     - 不得伪造 UI PASS
+     - 仍需完成核心、真实管线、GUI 和自动化测试
+     - 至少程序化验证 Tkinter 窗口可创建、更新和销毁
+     - 报告中标记 `PARTIAL — awaiting manual UI interaction check`
+     - 提供不超过 10 步的人工 UI 验证流程
+
+  ## 8. README 与用户手动测试入口
+
+  1. 更新 `macos/README.md`，至少写明：
+     - 环境恢复和依赖安装命令
+     - 启动 GUI 命令
+     - 运行完整测试命令
+     - 支持格式
+     - 参数含义与范围
+     - 输出位置和命名规则
+     - 当前尚未打包为 `.app`
+     - 已知限制
+
+  2. 用户醒来后应能按以下最短流程直接测试真实音频：
+
+     ```bash
+     cd /Users/smterpro/Workspace/Tools/AudioShifter
+     source macos/.venv/bin/activate
+     python -m audioshifter
+     ```
+
+  ## 9. 提交与阶段检查点
+
+  长期任务必须按通过的阶段建立独立提交，避免数小时工作只形成一个不可恢复的大提交。建议：
+
+  1. 纯逻辑和单元测试：
+
+     ```text
+     test: add macOS core contract tests
+     ```
+
+  2. 真实音频处理核心：
+
+     ```text
+     feat: implement macOS audio processing pipeline
+     ```
+
+  3. 中文 GUI：
+
+     ```text
+     feat: add macOS Tkinter MVP
+     ```
+
+  4. 自检、README 和报告：
+
+     ```text
+     test: verify macOS MVP end to end
+     ```
+
+  每次提交前运行该阶段对应的测试。不得提交会破坏下一阶段的已知失败中间状态。
+
+  ## 10. Git 范围与禁止提交项
+
+  提交前执行：
+
+  ```bash
+  git status --short
+  git diff
+  git ls-files
+  find . -type f -size +10M -not -path './.git/*'
+  ```
+
+  只提交 macOS Python 源码、自动化测试、最小测试配置、依赖/包配置、README、测试报告和 runtime 文档。
+
+  不得提交：
+  - `macos/.venv/`
+  - `__pycache__/`、pytest/coverage 缓存
+  - 合成或用户音频
+  - Downloads 输出
+  - 第三方二进制或 Homebrew 文件
+  - `.app`、`.dmg`、build、dist
+  - 证书、私钥、令牌或环境秘密
+  - 任何 Windows 文件变更
+
+  若产生固定本地测试目录，应在根 `.gitignore` 中加入精确目录规则；不得全局忽略所有 MP3、WAV、M4A 或 FLAC，因为后续可能需要经审查的小型测试夹具。
+
+  ## 11. 中断条件
+
+  以下情况必须停止并报告，不得自行突破：
+
+  1. Git 工作区不干净、无法 fast-forward 或远端出现未知提交。
+  2. static、behavior、architecture 或 verification 文档存在无法兼容的合同冲突。
+  3. 需要修改已确认参数范围、命名、Downloads 输出、不覆盖、取消或单任务规则才能继续。
+  4. 需要修改或执行 Windows 历史文件。
+  5. 需要升级、替换或大范围修改 Homebrew 环境。
+  6. 当前 FFmpeg 或 Rubber Band 无法实现合同。
+  7. 需要使用 Shell 字符串拼接才能处理用户路径。
+  8. 安全取消无法避免遗留进程或残缺输出。
+  9. 发现任何路径可能覆盖用户已有文件。
+  10. 需要删除来源不明确的文件。
+  11. 需要管理员权限、修改系统安全设置或安装来源不明的软件。
+  12. 测试证明合同内部存在矛盾或关键文件系统语义不可安全实现。
+  13. computer-use 要求 Codex 安装插件、修改插件配置或申请新的系统权限。
+  14. 推送前远端 `main` 出现新提交或发生分叉。
+
+  computer-use 不可用本身不阻塞核心实现，只影响最终 UI 自检等级。
+
+  ## 12. 完成标准
+
+  本 active step 只有在以下条件满足后才能关闭：
+
+  1. 用户可以从现有 `.venv` 通过固定命令启动中文 GUI。
+  2. 纯逻辑 P0 单元测试通过。
+  3. FFmpeg/Rubber Band 真实管线 P0 集成测试通过。
+  4. MP3、M4A、WAV 和 FLAC 均完成至少一条成功处理路径。
+  5. 输出固定为 320 kbps、44.1 kHz、双声道 MP3。
+  6. 输出固定进入 Downloads。
+  7. 文件命名、零值、速度小数和同名递增符合合同。
+  8. 源文件未被修改。
+  9. 临时资源在成功、失败和取消后得到处理。
+  10. 单任务约束和取消机制有效。
+  11. GUI 在处理时保持响应，Tkinter 更新只发生在主线程。
+  12. README 提供可直接执行的启动与测试命令。
+  13. `macos/mvp_test_report.md` 如实记录自动化和 UI 自检结果。
+  14. 未执行 PyInstaller，未生成发布包。
+  15. Windows 目录没有任何修改。
+  16. 所有提交已推送，工作区干净，本地与远端差异为 `0 0`。
+
+  computer-use UI 自检完整通过时，本阶段最终状态可以标记为 `PASS`。
+
+  核心、集成测试和 GUI 已完成，但 computer-use 不可用或 UI 操作未完成时，最终状态标记为 `PARTIAL — awaiting manual UI interaction check`；程序仍必须达到用户可以立即手动测试的程度。
+
+  ## 13. Runtime 推进
+
+  完成本阶段后，将实现结果、测试数量、UI 自检状态、报告路径和各阶段短 commit hash 追加到 `done`。
+
+  新的 active step 改为：
+
+  ```text
+  使用 PyInstaller 构建并验证未签名的纯 arm64 macOS 应用包，收集 Python/Tk、FFmpeg、Rubber Band 及传递动态库，验证脱离 Homebrew 和开发虚拟环境后的独立运行能力；本步骤同时处理应用内依赖路径、Mach-O 架构、动态库重定位、最低 macOS 实测边界和许可证材料，但仍不执行 Developer ID 签名或 Apple 公证。
+  ```
 
 # next steps
 
-- 在纯逻辑测试通过后，实现 `process_runner.py`、`dependencies.py`、`ffmpeg_adapter.py`、`rubberband_adapter.py` 和非 GUI `pipeline.py`，建立真实四格式输入、三阶段处理、取消和清理的集成测试。
-- 非 GUI 核心管线全部 P0 测试通过后，接入中文 Tkinter GUI、主线程事件调度、冲突提示、取消按钮和关闭确认。
-- GUI 和核心验证后执行本地未签名的纯 `arm64` 应用包验证，并解决内置依赖、动态库路径和最低 macOS 版本测试。
+- 使用 PyInstaller 构建并验证未签名的纯 `arm64` `.app`，确保普通用户不需要安装 Python、Homebrew、FFmpeg 或 Rubber Band。
+- 验证应用内 Tcl/Tk、FFmpeg、Rubber Band 及传递动态库的收集、路径解析、Mach-O 架构和运行时加载。
+- 在至少一个目标 Apple Silicon 环境上测试脱离开发虚拟环境和 Homebrew 的独立运行。
+- 根据最终依赖和实机结果确定最低 macOS 兼容边界。
 - 正式分发前确定 GPL 兼容或商业许可路线、第三方 notices 和对应源码提供方式。
-- macOS 复刻完成后才开始 `mobile/` 下的 Android 移植。
+- macOS 版本完成后再开始 `mobile/` 下的 Android 移植。
