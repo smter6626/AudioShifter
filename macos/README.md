@@ -1,6 +1,43 @@
-# AudioShifter macOS MVP
+# AudioShifter for macOS
 
-AudioShifter 是一个完全在本机运行的中文音频变调与变速工具。当前仓库提供可从 Python 虚拟环境直接启动的 Apple Silicon macOS MVP；尚未打包为 `.app`。
+AudioShifter 是一个完全在本机运行的中文音频变调与变速工具。仓库既保留 Python 源码开发入口，也提供可重复构建的 Apple Silicon `AudioShifter.app`。当前应用只在 Apple Silicon `arm64`、macOS 27 上构建和验证；旧版 macOS 未测试，可能无法运行。不承诺 Intel Mac、Rosetta 或 `universal2`。
+
+## 直接使用 `.app`
+
+本地构建产物位于：
+
+```text
+macos/dist/AudioShifter.app
+```
+
+在 Finder 中双击 `AudioShifter.app` 即可启动中文 GUI。这个应用包已经内置 CPython、Tcl/Tk、FFmpeg、FFprobe、Rubber Band 和运行所需的非系统动态库；运行时无需安装或激活 Python，无需 Homebrew，也无需单独安装音频工具。
+
+应用采用 PyInstaller `onedir + windowed` 结构。复制时必须保留完整 `.app` bundle 和其中的符号链接，建议使用 Finder 或：
+
+```bash
+ditto macos/dist/AudioShifter.app /目标目录/AudioShifter.app
+```
+
+当前构建只使用 PyInstaller 为 Apple Silicon 运行所需生成的 ad-hoc signing。它没有使用 Developer ID Application 证书、没有经过 Apple 公证、没有 stapling，也不是 Mac App Store sandbox 应用。因此 Gatekeeper 对来自其他传输渠道的副本可能拒绝评估；本阶段没有修改 Gatekeeper 或系统安全设置。
+
+## 构建 `.app`
+
+先按下文恢复开发环境，再从仓库根目录执行：
+
+```bash
+macos/packaging/build_app.sh
+```
+
+脚本会从正式 spec `macos/packaging/AudioShifter.spec` 重新生成图标、递归盘点外部工具的 Mach-O 依赖、清理本项目的 `macos/build/` 和 `macos/dist/`，并生成 `macos/dist/AudioShifter.app`。不需要手工修改构建后的应用包。
+
+重新运行打包验收：
+
+```bash
+macos/packaging/verify_app.sh
+macos/packaging/verify_packaged_pipeline.sh
+```
+
+第一条命令审计应用结构、Info.plist、图标、所有 Mach-O 架构、动态载入路径、RPATH、符号链接和 ad-hoc codesign；第二条使用应用包内部工具验证四种输入、输出规格、不覆盖、源哈希、取消和清理。详细证据见 [packaging_test_report.md](packaging_test_report.md)。
 
 ## 环境恢复
 
@@ -23,7 +60,7 @@ python -m pip install -e .
 
 不要升级或清理系统 Homebrew 环境来运行本 MVP；已验证版本和依赖事实见 [environment_report.md](environment_report.md)。
 
-## 启动 GUI
+## 从源码启动 GUI
 
 从仓库根目录执行：
 
@@ -62,16 +99,16 @@ macos/.venv/bin/python -m pytest macos/tests/unit
 macos/.venv/bin/python -m pytest macos/tests/integration
 ```
 
-测试在系统临时目录动态生成合成音频，不使用或提交用户音频。最新证据见 [mvp_test_report.md](mvp_test_report.md)。
+测试在系统临时目录动态生成合成音频，不使用或提交用户音频。源码 MVP 证据见 [mvp_test_report.md](mvp_test_report.md)，独立应用证据见 [packaging_test_report.md](packaging_test_report.md)。
 
 ## 当前限制
 
-- 当前仅支持 Apple Silicon `arm64` 开发环境；不支持 Intel Mac 或通用二进制。
-- 尚未执行 PyInstaller，未生成 `.app` 或 `.dmg`；源码运行仍需要已验证的 Homebrew 工具链和虚拟环境。
-- 最低 macOS 版本尚未通过最终打包产物实测，因此不作承诺。
+- 当前 `.app` 只在 Apple Silicon `arm64`、macOS 27 上构建和验证；旧版 macOS 未测试，可能无法运行。没有 Intel、Rosetta 或 `universal2` 构建。
+- 源码运行和重新构建仍需要已验证的 Homebrew 工具链与 `macos/.venv`；已经生成的 `.app` 运行时不需要这些开发依赖。
+- 没有 Developer ID 正式签名或 Apple 公证，未生成 `.dmg`，也没有上传 GitHub Release。
 - 不提供批处理、任务队列、自定义输出目录、输出格式选择或元数据保留。
 - 状态按处理阶段显示，不提供缺乏依据的精确百分比。
-- 正式二进制分发前仍需完成 FFmpeg/Rubber Band 等依赖的许可证材料与分发路线。
+- 已记录实际内置依赖及许可证文本，但正式公开分发前仍必须确定 GPL 兼容的应用许可、对应源码交付和 notice 路线；见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
 ## 设计与合同
 
