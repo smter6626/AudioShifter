@@ -31,6 +31,9 @@
 - 2026-08-03：使用已安装的 computer-use 能力完成真实 UI 自检：中文窗口和系统文件选择器正常；`+3/-20` 完整处理与 Downloads FFprobe 验证通过；同参数第二次运行提示并生成 `_2`，第一份与源文件未被修改；无输入、变调小数/越界、变速含 `%`/越界、重复启动、可靠取消、运行中关闭选择继续及确认取消退出均通过。测试音频和 Downloads 输出均在取证后按明确完整路径删除。
 - 2026-08-03：更新 `macos/README.md` 并创建 `macos/mvp_test_report.md`，记录环境恢复、固定启动/测试入口、版本、覆盖矩阵、代表性 FFprobe、UI 证据、限制和最终 `PASS`；提交 `9c29670`（`test: verify macOS MVP end to end`）。
 - 2026-08-03：确认本阶段未执行 PyInstaller，未生成 `.app` 或 `.dmg`，未修改或执行 Windows 历史内容，未提交虚拟环境、测试音频、Downloads 输出或第三方二进制。
+- 2026-08-03：完成用户人工验收：使用实际 MP3 以及由该文件转换得到的 M4A、48 kHz 单声道 WAV 和 FLAC，四种格式的变调变速均成功，输出可正常播放且主观听感正常；完整测试再次确认为 `130 passed`。
+- 2026-08-03：人工确认同名输出提示与 `_2` 自动递增正确，既有文件未被覆盖；输入源文件未被修改；取消后没有残缺输出；GUI 未发现肉眼可见缺陷；任务运行中关闭窗口会正确提示，选择 Yes 后先取消任务、完成清理再退出。
+- 2026-08-03：取消完成后人工执行 `pgrep -fl 'ffmpeg|ffprobe|rubberband'`，结果无输出，确认未发现遗留 FFmpeg、FFprobe 或 Rubber Band 进程。结合自动化、computer-use 与用户人工验证，macOS 源码可运行 MVP 验收状态确认为 `PASS`，可以进入 PyInstaller 打包验证阶段。
 
 # completed step specification — macOS runnable MVP
 
