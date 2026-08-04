@@ -101,8 +101,10 @@ def _pid_exists(pid: int) -> bool:
 def test_TASK_T005_cancel_kills_process_group_and_reaps_children(tmp_path: Path) -> None:
     child_pid_file = tmp_path / "child.pid"
     program = (
-        "import pathlib, subprocess, sys, time; "
-        "child=subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)']); "
+        "import pathlib, signal, subprocess, sys, time; "
+        "signal.signal(signal.SIGTERM, signal.SIG_IGN); "
+        "child=subprocess.Popen([sys.executable, '-c', "
+        "'import signal, time; signal.signal(signal.SIGTERM, signal.SIG_IGN); time.sleep(60)']); "
         f"pathlib.Path({str(child_pid_file)!r}).write_text(str(child.pid)); "
         "time.sleep(60)"
     )

@@ -109,6 +109,17 @@ class BlockingPipeline:
         )
 
 
+class FailingPipeline:
+    def __init__(self, error=None, unexpected: Exception | None = None) -> None:
+        self.error = error
+        self.unexpected = unexpected
+
+    def run(self, request, *, allocation, token, on_stage):
+        if self.unexpected is not None:
+            raise self.unexpected
+        raise self.error
+
+
 def _source(tmp_path: Path) -> Path:
     source = tmp_path / "source.wav"
     source.write_bytes(b"audio")
@@ -223,3 +234,51 @@ def test_ERR_T002_no_input_and_invalid_parameters_are_actionable(tmp_path: Path)
     assert view.errors[-1].code is ErrorCode.INVALID_PITCH
     assert controller.start(str(source), "0", "20%") is False
     assert view.errors[-1].code is ErrorCode.INVALID_SPEED
+
+
+def test_ERR_T003_missing_downloads_reaches_view_before_worker(tmp_path: Path) -> None:
+    root = FakeRoot()
+    view = FakeView()
+    controller = ApplicationController(
+        root,
+        view,
+        pipeline=BlockingPipeline(),
+        downloads_path=tmp_path / "missing-Downloads",
+    )
+    assert controller.start(str(_source(tmp_path)), "0", "0") is False
+    assert view.errors[-1].code is ErrorCode.DOWNLOADS_NOT_FOUND
+    assert controller.active is False
+
+
+def test_ERR_T004_T005_structured_pipeline_errors_reach_view_on_main_thread(tmp_path: Path) -> None:
+    for code in (ErrorCode.DISK_FULL, ErrorCode.PROCESS_FAILED):
+        root = FakeRoot()
+        view = FakeView()
+        main_thread = threading.get_ident()
+        controller = ApplicationController(
+            root,
+            view,
+            pipeline=FailingPipeline(app_error(code)),
+            downloads_path=tmp_path,
+            poll_interval_ms=1,
+        )
+        assert controller.start(str(_source(tmp_path)), "0", "0")
+        root.pump_until(lambda: bool(view.errors))
+        assert view.errors[-1].code is code
+        assert set(view.thread_ids) == {main_thread}
+
+
+def test_ERR_T009_unexpected_worker_exception_maps_to_unknown_error(tmp_path: Path) -> None:
+    root = FakeRoot()
+    view = FakeView()
+    controller = ApplicationController(
+        root,
+        view,
+        pipeline=FailingPipeline(unexpected=RuntimeError("injected")),
+        downloads_path=tmp_path,
+        poll_interval_ms=1,
+    )
+    assert controller.start(str(_source(tmp_path)), "0", "0")
+    root.pump_until(lambda: bool(view.errors))
+    assert view.errors[-1].code is ErrorCode.UNKNOWN_ERROR
+    assert "traceback" in view.errors[-1].details

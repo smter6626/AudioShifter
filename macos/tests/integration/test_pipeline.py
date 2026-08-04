@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import array
 import sys
 import tempfile
 import threading
@@ -66,6 +67,39 @@ def _probe(path: Path, dependencies: ResolvedDependencies) -> dict:
         shell=False,
     )
     return json.loads(completed.stdout)
+
+
+def _estimate_frequency(path: Path, dependencies: ResolvedDependencies) -> float:
+    import subprocess
+
+    completed = subprocess.run(
+        [
+            str(dependencies.ffmpeg_path),
+            "-v",
+            "error",
+            "-i",
+            str(path),
+            "-f",
+            "s16le",
+            "-ac",
+            "1",
+            "-ar",
+            "44100",
+            "pipe:1",
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=True,
+        shell=False,
+    )
+    samples = array.array("h")
+    samples.frombytes(completed.stdout)
+    margin = 4410
+    measured = samples[margin:-margin]
+    signs = [sample >= 0 for sample in measured if sample != 0]
+    transitions = sum(left != right for left, right in zip(signs, signs[1:]))
+    duration = len(measured) / 44100
+    return transitions / (2 * duration)
 
 
 @pytest.mark.integration
@@ -146,6 +180,25 @@ def test_PIPE_T003_T004_pitch_speed_combinations(
     )
     assert name_fragment in result.output_path.name
     assert result.tempo_ratio == Decimal(1) + Decimal(speed) / Decimal(100)
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(("pitch", "bound"), [(3, 480.0), (-3, 400.0)])
+def test_PITCH_T014_T015_frequency_direction(
+    tmp_path: Path,
+    synthetic_sources: dict[str, Path],
+    dependencies: ResolvedDependencies,
+    pitch: int,
+    bound: float,
+) -> None:
+    result = AudioPipeline(FixedResolver(dependencies)).run(
+        _request(synthetic_sources["wav"], tmp_path / "Downloads", pitch, "0")
+    )
+    frequency = _estimate_frequency(result.output_path, dependencies)
+    if pitch > 0:
+        assert frequency > bound
+    else:
+        assert frequency < bound
 
 
 @pytest.mark.integration
