@@ -9,9 +9,11 @@ This is a factual engineering record, not legal advice.
 
 ## Distribution boundary
 
-The current application is built for the repository owner's local use. It is
-not uploaded to GitHub Releases or otherwise distributed as a binary. Local
-execution does not itself distribute the embedded third-party copies.
+The `v0.1.0-alpha.1` application is being prepared as a GitHub Draft Release
+with a matching corresponding-source attachment. Public publication is blocked
+because the repository does not yet have a root-level project licence. A Draft
+asset is not a representation that the project is ready for public binary
+distribution.
 
 Before providing the application binary to another person, publishing it, or
 uploading it to a release service, the distributor must separately confirm and
@@ -77,19 +79,28 @@ PyInstaller wheel, not reconstructed from memory.
 
 ## Source acquisition
 
-For the exact versions above, obtain source from the linked upstream project
-release/tag and verify it against the applicable Homebrew formula/bottle
-receipt. Homebrew's reproducible entry points are:
+`macos/release/collect_corresponding_source.py` obtains the exact source
+versions above from the installed SPDX SBOMs, verifies formula SHA-256 values,
+stores the matching historical homebrew-core formula revision and applicable
+patches, and maps every packaged Mach-O to one of these components. It also
+stores sanitised bottle receipts and build evidence. The generated archive is:
+
+```text
+AudioShifter-v0.1.0-alpha.1-corresponding-source.tar.gz
+```
+
+Homebrew's independent source-oriented entry points include:
 
 ```bash
 brew info --json=v2 <formula>
 brew fetch --build-from-source <formula>
 ```
 
-For Python and PyInstaller, use the matching release artifacts from
-<https://www.python.org/downloads/source/> and
-<https://pypi.org/project/pyinstaller/6.21.0/>. For FFmpeg and Rubber Band,
-the recorded upstream archives are `ffmpeg-8.1.2.tar.xz` and
+For Python and PyInstaller, the collector fixes the matching upstream release
+tag/commit. Prebuilt PyInstaller bootloaders present in its upstream tag archive
+are excluded from the corresponding-source copy while its complete bootloader
+source and build scripts remain included. For FFmpeg and Rubber Band, the
+recorded upstream archives are `ffmpeg-8.1.2.tar.xz` and
 `rubberband-4.0.0.tar.bz2`. A public binary release must publish or offer the
 corresponding source in the manner required by the applicable licence; merely
 linking to an upstream homepage may not be sufficient for that release.

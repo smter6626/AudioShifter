@@ -2,6 +2,30 @@
 
 AudioShifter 是一个完全在本机运行的中文音频变调与变速工具。仓库既保留 Python 源码开发入口，也提供可重复构建的 Apple Silicon `AudioShifter.app`。当前应用只在 Apple Silicon `arm64`、macOS 27 上构建和验证；旧版 macOS 未测试，可能无法运行。不承诺 Intel Mac、Rosetta 或 `universal2`。
 
+## v0.1.0-alpha.1 Release candidate
+
+首个公开预览版候选为 `v0.1.0-alpha.1`，预定 Release 页面：
+
+<https://github.com/smter6626/AudioShifter/releases/tag/v0.1.0-alpha.1>
+
+正式附件名称固定为：
+
+```text
+AudioShifter-v0.1.0-alpha.1-macOS27-arm64.zip
+AudioShifter-v0.1.0-alpha.1-corresponding-source.tar.gz
+SHA256SUMS.txt
+```
+
+下载三个文件后，在其所在目录校验：
+
+```bash
+shasum -a 256 -c SHA256SUMS.txt
+```
+
+二进制使用 PyInstaller ad-hoc signing，没有 Developer ID、Apple notarization 或 stapling。首次打开可能出现“Apple 无法验证 AudioShifter.app 是否包含恶意软件”。只应在确认文件来自本仓库 Release 且 SHA-256 匹配后，先尝试打开一次，再前往“系统设置 → 隐私与安全性 → 仍要打开”对该应用单独放行；不要全局关闭 Gatekeeper。
+
+对应源码附件包含该 tag 的 AudioShifter 源码，以及实际内置第三方组件的准确源码归档、Homebrew formula/receipt、构建证据、补丁和许可证。当前仓库尚无根级项目许可证；在项目所有者明确选择与内置 GPL 组件兼容的项目许可证前，Release 只能保持 Draft，不能公开发布。
+
 ## 直接使用 `.app`
 
 本地构建产物位于：

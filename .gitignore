@@ -11,6 +11,8 @@ build/
 dist/
 /macos/build/
 /macos/dist/
+/macos/release-work/
+/macos/release-dist/
 *.egg-info/
 .pytest_cache/
 .mypy_cache/
