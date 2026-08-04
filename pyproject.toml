@@ -8,6 +8,9 @@ version = "0.1.0"
 description = "AudioShifter macOS local audio pitch and tempo processor"
 requires-python = ">=3.11"
 
+[project.scripts]
+audioshifter = "audioshifter.__main__:main"
+
 [tool.setuptools]
 package-dir = {"" = "macos/src"}
 
