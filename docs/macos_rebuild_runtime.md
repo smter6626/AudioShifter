@@ -66,6 +66,8 @@
 - 2026-08-04：修正 alpha.3 当前用户说明中的 App-only SHA-256 命令：原带 `$` 行尾锚点的形式在构建验证环境中曾通过，但在非开发目标 Mac 的下载副本上未匹配出可识别的哈希行；统一改为不带行尾锚点，并在 `shasum` 前使用 `tr -d '\r'` 兼容 CRLF。目标 Mac 已使用新命令得到 `OK`，直接计算 ZIP 摘要也与 Draft 完全一致；本地又分别以 LF 和合成 CRLF 的 `SHA256SUMS.txt` 验证新命令。未修改 ZIP、`SHA256SUMS.txt` Release 附件或任何已记录摘要；本条记录时 Release 仍为 Draft。
 - 2026-08-04：在非开发 Apple Silicon Mac 人工验收通过后，使用 GitHub CLI 将现有 Draft database ID `364860803` 正式公开为 `v0.1.0-alpha.3` GitHub Pre-release；`isDraft=false`、`isPrerelease=true`，`publishedAt=2026-08-04T13:39:17Z`，公开 URL 为 `https://github.com/smter6626/AudioShifter/releases/tag/v0.1.0-alpha.3`。未重新构建应用，未移动 tag（仍固定到 `a6174b45666a586c2920afdd42e600dce7a8bcda`），未删除、替换或重新上传附件；公开资产名称、asset ID、大小和 SHA-256 与人工验收版本完全一致。使用全新目录从公开 Release 下载三项附件后，可移植 App-only 命令为 `OK`，完整 `SHA256SUMS.txt` 为两个 `OK`，两个归档直接摘要也与固定记录一致；未认证 HTTP 请求返回 200。最终状态为 `PASS — v0.1.0-alpha.3 manually accepted and publicly released as a GitHub Pre-release`。alpha.1/alpha.2 内部 Draft 保持不变，Android active step 未改变，Windows 历史内容未修改。
 
+- 2026-08-04：清理已废弃的未公开 Release 候选：用户通过 `gh release delete` 删除 alpha.1 Draft ID `364786397` 和 alpha.2 Draft ID `364826053`，且未使用 `--cleanup-tag`。`gh release list` 现仅保留公开的 `v0.1.0-alpha.3` Pre-release；远端 annotated tags `v0.1.0-alpha.1`、`v0.1.0-alpha.2` 和 `v0.1.0-alpha.3` 均继续存在，并分别解析到原有 release commit。该清理仅移除从未公开且已被后续候选取代的 Draft Release 及其附件，不改变历史 tag、源码或公开 alpha.3 资产。
+
 # completed step specification — macOS runnable MVP
 
 - 完成 macOS 第一阶段可运行 MVP：按照已确认的行为合同，依次建立纯逻辑模块、真实 FFmpeg/Rubber Band 音频管线、中文 Tkinter GUI 和端到端自检，使用户可以从现有虚拟环境启动程序并使用真实音频文件测试。本步骤允许编写正式业务代码、自动化测试和 GUI，也允许使用用户已手动确认可用的 computer-use/桌面控制能力执行 UI 自检；不执行 PyInstaller 打包，不生成 `.app` 或 `.dmg`，不处理签名、公证和正式分发。
@@ -580,4 +582,4 @@
 
 - 为 Android 目标确认输入选择、输出位置、存储权限、后台任务、取消、前后台切换和文件分享行为，不将 macOS 的 Downloads/Tkinter 实现细节直接当成 Android 合同。
 - 盘点可用 Android 音频工具链、FFmpeg/Rubber Band 构建路线、ABI、许可证和测试设备环境；在合同与环境报告完成前不开始产品实现。
-- `v0.1.0-alpha.3` 已完成人工验收并公开为 GitHub Pre-release；alpha.1 和 alpha.2 内部 Draft 保持不变。是否进入 Developer ID 签名与 Apple 公证阶段仍另行决定。
+- `v0.1.0-alpha.3` 已完成人工验收并公开为 GitHub Pre-release；alpha.1 和 alpha.2 的未公开 Draft Release 已删除，两个历史 annotated tags 继续保留用于审计与复现。是否进入 Developer ID 签名与 Apple 公证阶段仍另行决定。
