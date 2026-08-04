@@ -44,6 +44,7 @@
 - 2026-08-04：Computer Use 对最终打包应用执行完整 GUI 自检：系统文件选择器、`+3/-20` 后台处理、响应性、按钮状态、阶段状态、成功 Downloads 路径和 FFprobe 均通过；第二次处理明确提示不覆盖并生成 `_2`，首份输出和源文件哈希未变。长音频处理中捕获的实际子进程为 bundle 内 `Contents/Frameworks/bin/rubberband`；取消后无输出、无任务目录、无子进程且 GUI 可再次使用。运行中关闭选择 No 后任务继续，第二次选择 Yes 后先取消清理再退出，最终无遗留应用或工具进程。所有明确记录的合成输入和 Downloads 输出均已按完整路径删除。
 - 2026-08-04：最终自动化回归为 `137 passed, 0 failed, 0 skipped`，其中 109 项单元/故障注入/打包源测试、28 项集成测试；最终构建静态审计和真实打包管线脚本也均通过。完整证据记录于 `macos/packaging_test_report.md`，用户入口更新于 `macos/README.md`，实际内置组件与许可证材料记录于 `macos/THIRD_PARTY_NOTICES.md` 和 `macos/licenses/`。本应用只在 Apple Silicon arm64、macOS 27.0 build `26A5378n` 上构建和验证；旧版 macOS 未测试，可能无法运行，不承诺 Intel、Rosetta 或 universal2。
 - 2026-08-04：建立阶段提交 `f0f4dcd`（`build: add standalone macOS app packaging`）、`3a627a4`（`test: verify standalone macOS app`）和 `710677c`（`docs: record macOS packaging results`）；`.app`、build/dist、第三方二进制/动态库、虚拟环境、测试音频和 Downloads 输出均保持未跟踪且未提交。
+- 2026-08-04：完成非开发机跨机器人工验证：将未使用 Developer ID 签名、未经 Apple 公证的 `AudioShifter.app` 通过 AirDrop 传输到另一台符合目标范围的 Apple Silicon Mac；首次启动被 Gatekeeper 以“Apple 无法验证是否包含恶意软件”正常拦截。用户在“系统设置 → 隐私与安全性”中对该应用选择“仍要打开”完成单应用放行后，应用可正常启动并完成音频变调处理，界面和处理逻辑符合预期。该结果确认独立 `.app` 可在非开发机上运行，但未改变当前 ad-hoc 签名、未公证及首次启动需人工放行的分发边界。
 
 # completed step specification — macOS runnable MVP
 
@@ -414,7 +415,7 @@
      - 仍需完成核心、真实管线、GUI 和自动化测试
      - 至少程序化验证 Tkinter 窗口可创建、更新和销毁
      - 报告中标记 `PARTIAL — awaiting manual UI interaction check`
-     - 提供不超过 10 步的人工 UI 验证流程
+     - 提供不超过 10 步的人工验证流程
 
   ## 8. README 与用户手动测试入口
 
