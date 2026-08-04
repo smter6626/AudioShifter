@@ -34,6 +34,16 @@
 - 2026-08-03：完成用户人工验收：使用实际 MP3 以及由该文件转换得到的 M4A、48 kHz 单声道 WAV 和 FLAC，四种格式的变调变速均成功，输出可正常播放且主观听感正常；完整测试再次确认为 `130 passed`。
 - 2026-08-03：人工确认同名输出提示与 `_2` 自动递增正确，既有文件未被覆盖；输入源文件未被修改；取消后没有残缺输出；GUI 未发现肉眼可见缺陷；任务运行中关闭窗口会正确提示，选择 Yes 后先取消任务、完成清理再退出。
 - 2026-08-03：取消完成后人工执行 `pgrep -fl 'ffmpeg|ffprobe|rubberband'`，结果无输出，确认未发现遗留 FFmpeg、FFprobe 或 Rubber Band 进程。结合自动化、computer-use 与用户人工验证，macOS 源码可运行 MVP 验收状态确认为 `PASS`，可以进入 PyInstaller 打包验证阶段。
+- 2026-08-04：完成 PyInstaller 独立应用阶段的 Git 与基线门槛；开始时 `main` 干净并跟踪 `origin/main`、差异为 `0 0`，构建前源码基线为 `130 passed`。完整复读静态/运行时合同、设计、验证矩阵、环境、MVP 报告、README、依赖配置和 macOS 源码/测试后未发现合同矛盾；Windows 历史目录始终未修改或执行。
+- 2026-08-04：将用户提供的 1254 × 1254 正方形 PNG 原样纳入 `macos/assets/source/audioshifter_icon.png`，通过标准 iconset 生成有效的 `macos/assets/AudioShifter.icns`，并由正式 spec 写入最终应用；Finder 和运行中应用均显示自定义图标而非 PyInstaller 默认图标。
+- 2026-08-04：实现冻结运行时资源根和 resolver 工厂，源码态继续使用开发依赖解析，PyInstaller 态只从 `sys._MEIPASS/bin` 解析 FFmpeg、FFprobe 和 Rubber Band；缺失内部工具仍映射为稳定依赖错误。建立 `macos/packaging/AudioShifter.spec`、`build_app.sh`、入口和递归 Mach-O 依赖盘点脚本，一条命令可重复生成 windowed/onedir、纯 arm64 的 `macos/dist/AudioShifter.app`，bundle identifier 固定为 `io.github.smter6626.audioshifter`。
+- 2026-08-04：最终应用大小为 63,356,035 字节，内置 CPython 3.11.15、Tcl/Tk 8.6.18、FFmpeg/FFprobe 8.1.2、Rubber Band 4.0.0 及实际传递动态库。递归审计 75 个 Mach-O，全部为 thin arm64；324 条动态引用和 20 个 LC_RPATH 均可解析，外部非系统 load command 为 0，指向 `/opt/homebrew`、`.venv` 或仓库的开发载入项为 0；44 个符号链接均有效且不指向 bundle 外。
+- 2026-08-04：PyInstaller 未提供 Developer ID identity，仅执行 Apple Silicon bundle 所需的 ad-hoc signing；`codesign --verify --deep --strict --verbose=4` 通过，`Signature=adhoc`、`TeamIdentifier=not set`。未执行 Developer ID 正式签名、Apple 公证、stapling、sandbox、DMG、GitHub Release 或任何系统安全设置修改；`spctl` 因此按预期返回 rejected，并如实记录而不作为本阶段失败。
+- 2026-08-04：使用最终 `.app` 完成无 `VIRTUAL_ENV`、仅系统 PATH 且 cwd 为 `/private/tmp`、以及 `ditto` 复制到仓库外临时目录的三种独立启动验证；限制环境和仓库外进程的 `lsof` 均未发现 `/opt/homebrew`、`.venv` 或仓库源码访问，复制后符号链接有效，测试副本已清理。Computer Use 从 Finder 打开最终应用，中文 windowed GUI 正常出现且没有伴随终端窗口。
+- 2026-08-04：`verify_packaged_pipeline.sh` 只使用 `AudioShifter.app/Contents/Frameworks/bin/` 内部工具，在限制 PATH 下完成 WAV、MP3、M4A、FLAC 四格式真实处理；覆盖大写扩展名、中文、空格、括号、`&` 和单引号路径，四份输出均为 MP3、44100 Hz、双声道、320000 bit/s，源 SHA-256 均未变化。同名 `_2`/`_3`、旧输出哈希保护、真实 Rubber Band 取消、零残缺输出、零工作区泄漏和子进程回收均通过。
+- 2026-08-04：Computer Use 对最终打包应用执行完整 GUI 自检：系统文件选择器、`+3/-20` 后台处理、响应性、按钮状态、阶段状态、成功 Downloads 路径和 FFprobe 均通过；第二次处理明确提示不覆盖并生成 `_2`，首份输出和源文件哈希未变。长音频处理中捕获的实际子进程为 bundle 内 `Contents/Frameworks/bin/rubberband`；取消后无输出、无任务目录、无子进程且 GUI 可再次使用。运行中关闭选择 No 后任务继续，第二次选择 Yes 后先取消清理再退出，最终无遗留应用或工具进程。所有明确记录的合成输入和 Downloads 输出均已按完整路径删除。
+- 2026-08-04：最终自动化回归为 `137 passed, 0 failed, 0 skipped`，其中 109 项单元/故障注入/打包源测试、28 项集成测试；最终构建静态审计和真实打包管线脚本也均通过。完整证据记录于 `macos/packaging_test_report.md`，用户入口更新于 `macos/README.md`，实际内置组件与许可证材料记录于 `macos/THIRD_PARTY_NOTICES.md` 和 `macos/licenses/`。本应用只在 Apple Silicon arm64、macOS 27.0 build `26A5378n` 上构建和验证；旧版 macOS 未测试，可能无法运行，不承诺 Intel、Rosetta 或 universal2。
+- 2026-08-04：建立阶段提交 `f0f4dcd`（`build: add standalone macOS app packaging`）、`3a627a4`（`test: verify standalone macOS app`）和 `710677c`（`docs: record macOS packaging results`）；`.app`、build/dist、第三方二进制/动态库、虚拟环境、测试音频和 Downloads 输出均保持未跟踪且未提交。
 
 # completed step specification — macOS runnable MVP
 
@@ -537,15 +547,16 @@
   使用 PyInstaller 构建并验证未签名的纯 arm64 macOS 应用包，收集 Python/Tk、FFmpeg、Rubber Band 及传递动态库，验证脱离 Homebrew 和开发虚拟环境后的独立运行能力；本步骤同时处理应用内依赖路径、Mach-O 架构、动态库重定位、最低 macOS 实测边界和许可证材料，但仍不执行 Developer ID 签名或 Apple 公证。
   ```
 
+# completed step specification — standalone arm64 macOS application
+
+- 使用 PyInstaller 构建并验证未使用 Developer ID 签名、未经 Apple 公证的纯 `arm64` macOS 应用包；收集 Python/Tk、FFmpeg、FFprobe、Rubber Band 及传递动态库，验证 Finder 双击、脱离 Homebrew PATH、开发虚拟环境和仓库后的独立运行能力；处理应用内依赖路径、Mach-O 架构、动态库重定位、ad-hoc signing、仅 macOS 27 的实测边界和许可证材料，不执行 Developer ID 签名或 Apple 公证。
+
 # active step
 
-- 使用 PyInstaller 构建并验证未签名的纯 `arm64` macOS 应用包，收集 Python/Tk、FFmpeg、Rubber Band 及传递动态库，验证脱离 Homebrew 和开发虚拟环境后的独立运行能力；本步骤同时处理应用内依赖路径、Mach-O 架构、动态库重定位、最低 macOS 实测边界和许可证材料，但仍不执行 Developer ID 签名或 Apple 公证。
+- 在不修改 `windows/` 历史内容的前提下，开始 `mobile/` 下的 Android 移植准备阶段：先建立 Android 用户可见行为合同、架构计划、验证矩阵和开发环境事实，再根据已确认的 macOS 合同定义 Android MVP；本步骤开始前不得直接照搬桌面 GUI 或未经确认地改变参数、命名、输出保护和取消语义。
 
 # next steps
 
-- 使用 PyInstaller 构建并验证未签名的纯 `arm64` `.app`，确保普通用户不需要安装 Python、Homebrew、FFmpeg 或 Rubber Band。
-- 验证应用内 Tcl/Tk、FFmpeg、Rubber Band 及传递动态库的收集、路径解析、Mach-O 架构和运行时加载。
-- 在至少一个目标 Apple Silicon 环境上测试脱离开发虚拟环境和 Homebrew 的独立运行。
-- 根据最终依赖和实机结果确定最低 macOS 兼容边界。
-- 正式分发前确定 GPL 兼容或商业许可路线、第三方 notices 和对应源码提供方式。
-- macOS 版本完成后再开始 `mobile/` 下的 Android 移植。
+- 为 Android 目标确认输入选择、输出位置、存储权限、后台任务、取消、前后台切换和文件分享行为，不将 macOS 的 Downloads/Tkinter 实现细节直接当成 Android 合同。
+- 盘点可用 Android 音频工具链、FFmpeg/Rubber Band 构建路线、ABI、许可证和测试设备环境；在合同与环境报告完成前不开始产品实现。
+- 正式公开分发 macOS 二进制之前，另行确定 GPL 兼容的应用许可、第三方 notices、对应源码交付方式，以及是否进入 Developer ID 签名与 Apple 公证阶段；当前本地个人使用不触发发布动作。
