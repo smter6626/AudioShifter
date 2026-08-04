@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import plistlib
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -168,6 +169,8 @@ def audit_app(app: Path) -> dict[str, object]:
     for key, expected in expected_info.items():
         if info.get(key) != expected:
             raise RuntimeError(f"Info.plist {key}={info.get(key)!r}; expected {expected!r}")
+    if re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", str(info["CFBundleShortVersionString"])) is None:
+        raise RuntimeError("CFBundleShortVersionString must contain three numeric components")
     icon_path = resources / str(info["CFBundleIconFile"])
     if not icon_path.is_file():
         raise FileNotFoundError(f"Configured application icon is missing: {icon_path}")

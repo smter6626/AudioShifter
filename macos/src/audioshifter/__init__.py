@@ -5,4 +5,5 @@
 from .models import ProcessingRequest, ProcessingResult
 
 __all__ = ["ProcessingRequest", "ProcessingResult"]
-__version__ = "0.1.0a2"
+__version__ = "0.1.0a3"
+__display_version__ = "0.1.0-alpha.3"

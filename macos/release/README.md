@@ -1,7 +1,7 @@
 # macOS release tooling
 
 This directory contains the reproducible tooling and notes for
-`v0.1.0-alpha.2`. Generated applications, downloaded source archives, release
+`v0.1.0-alpha.3`. Generated applications, downloaded source archives, release
 assets, and verification caches are intentionally excluded from Git.
 
 `release_config.py` is the single source of the current tag, application
@@ -10,10 +10,10 @@ desired; the script rejects a different tag instead of silently mixing
 versions.
 
 After the release preparation commit has been pushed and annotated tag
-`v0.1.0-alpha.2` points at that exact commit, run from the repository root:
+`v0.1.0-alpha.3` points at that exact commit, run from the repository root:
 
 ```bash
-macos/release/build_release_assets.sh v0.1.0-alpha.2
+macos/release/build_release_assets.sh v0.1.0-alpha.3
 ```
 
 The command reruns pytest, creates a temporary detached worktree at the release
@@ -40,6 +40,19 @@ Homebrew metadata and patches, and the licence texts shipped in the app.
 Covered AudioShifter-owned code is licensed under `GPL-3.0-or-later` as defined
 in the root `LICENSING.md`. The AudioShifter name, logo, application icon and
 official branding are excluded from that grant and governed by
-`TRADEMARKS.md`; `windows/` is also excluded. The alpha.2 GitHub Release is
+`TRADEMARKS.md`; `windows/` is also excluded. The alpha.3 GitHub Release is
 prepared only as a Draft until owner review and non-development-Mac acceptance
 are complete.
+
+Ordinary users need only the app ZIP and `SHA256SUMS.txt`. They can validate
+the app without downloading corresponding source:
+
+```bash
+grep 'AudioShifter-v0.1.0-alpha.3-macOS27-arm64.zip$' SHA256SUMS.txt \
+  | shasum -a 256 -c -
+```
+
+The corresponding-source archive remains a required Release asset for licence
+compliance, inspection, modification, and rebuilding, but it is not required to
+run the app. When both archives are present, `shasum -a 256 -c SHA256SUMS.txt`
+validates both.

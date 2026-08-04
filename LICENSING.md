@@ -49,6 +49,11 @@ The following material is not licensed by Yeming Dai under this project's
    ```
 
    Brand use is governed by [`TRADEMARKS.md`](TRADEMARKS.md), not by the GPL.
+   A separate, narrow permission allows copying the AudioShifter name, icon,
+   and other brand assets only as necessary to reproduce an unmodified
+   official build from an official AudioShifter tag or to redistribute an
+   unmodified official Release. This does not place those assets under the GPL
+   and does not permit their use for a modified version or fork.
 3. **Third-party material.** Third-party programs, libraries, source archives,
    licence texts, notices, and other third-party material remain governed by
    their respective licences and copyright holders. The project GPL grant does
@@ -72,6 +77,11 @@ project owner gives written permission—it must:
 
 Accurate descriptive references such as “based on AudioShifter” remain
 permitted under the branding policy.
+
+An unmodified build reproduced from an official AudioShifter tag may retain the
+official name, bundle identifier, and brand assets only for that reproduction.
+Any code or product modification ends that narrow permission unless the project
+owner gives prior written permission.
 
 ## Official binaries and corresponding source
 

@@ -10,6 +10,8 @@ from tkinter import filedialog, messagebox, ttk
 
 from .controller import ApplicationController
 from .errors import AppError
+from .legal import LicenseWindowController
+from .macos_menu import ApplicationMenuRegistration, install_application_menu
 from .models import OutputAllocation, ProcessingResult
 
 
@@ -21,10 +23,14 @@ class AudioShifterView:
         self.pitch = tk.StringVar(value="0")
         self.speed = tk.StringVar(value="0")
         self.status = tk.StringVar(value="就绪：请选择音频文件。")
+        self.license_window = LicenseWindowController(root)
 
         root.title("AudioShifter 音频变调变速")
         root.geometry("760x430")
         root.minsize(680, 400)
+        self.application_menu: ApplicationMenuRegistration = install_application_menu(
+            root, self.license_window.show
+        )
         self._build_widgets()
 
     def attach_controller(self, controller: ApplicationController) -> None:

@@ -134,6 +134,10 @@ def verify_source(root: Path, tag: str, expected_commit: str) -> dict[str, Any]:
     for required in ("TRADEMARKS.md", "windows/", "third-party"):
         if required not in exclusions:
             raise RuntimeError(f"Corresponding source licence exclusions omit {required}")
+    brand_permission = project_licensing.get("brand_permission", "")
+    for required in ("unmodified official release", "official AudioShifter tag", "modified versions"):
+        if required not in brand_permission:
+            raise RuntimeError(f"Corresponding source brand permission omits {required}")
     project_files = project_licensing.get("files", {})
     for name in ("LICENSE", "LICENSING.md", "TRADEMARKS.md"):
         record = project_files.get(name, {})

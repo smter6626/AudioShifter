@@ -622,10 +622,15 @@ def main() -> None:
             "spdx_expression": "GPL-3.0-or-later",
             "covered": "AudioShifter-owned macOS/mobile/shared code, tests, build and release tools, and related documentation",
             "excluded": [
-                "AudioShifter name, logo, application icon, and official branding; governed by TRADEMARKS.md",
+                "AudioShifter name, logo, application icon, and official branding; excluded from GPL and governed by TRADEMARKS.md",
                 "windows/ historical content",
                 "third-party components; governed by their respective licences",
             ],
+            "brand_permission": (
+                "Brand assets may be copied only as necessary to reproduce or redistribute "
+                "an unmodified official release built from an official AudioShifter tag; "
+                "modified versions and forks must replace source-identifying branding"
+            ),
             "files": project_licensing_files,
         },
         "audioshifter_source": {
@@ -663,6 +668,9 @@ Covered AudioShifter-owned code is licensed under GPL-3.0-or-later as described
 in `project-licensing/LICENSING.md`. The AudioShifter name, logo, icon, and
 official branding are excluded and governed by `project-licensing/TRADEMARKS.md`;
 `windows/` is excluded; third-party components retain their respective licences.
+The brand policy grants narrow permission to reproduce or redistribute an
+unmodified official release built from an official AudioShifter tag; modified
+versions and forks must use their own source-identifying branding.
 """,
         encoding="utf-8",
     )

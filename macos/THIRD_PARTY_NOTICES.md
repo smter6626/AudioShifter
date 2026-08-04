@@ -9,7 +9,7 @@ This is a factual engineering record, not legal advice.
 
 ## Distribution boundary
 
-The `v0.1.0-alpha.2` application is being prepared as a GitHub Draft
+The `v0.1.0-alpha.3` application is being prepared as a GitHub Draft
 Pre-release with a matching corresponding-source attachment. Covered
 AudioShifter-owned code is licensed under `GPL-3.0-or-later`, subject to the
 scope and exclusions in the root `LICENSING.md`. The AudioShifter name, logo,
@@ -88,7 +88,7 @@ patches, and maps every packaged Mach-O to one of these components. It also
 stores sanitised bottle receipts and build evidence. The generated archive is:
 
 ```text
-AudioShifter-v0.1.0-alpha.2-corresponding-source.tar.gz
+AudioShifter-v0.1.0-alpha.3-corresponding-source.tar.gz
 ```
 
 Homebrew's independent source-oriented entry points include:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 from macos.packaging.collect_macho_dependencies import collect_external_binaries
 
@@ -45,3 +46,11 @@ def test_PKG_project_license_and_brand_sources_are_bundled_by_spec() -> None:
     assert '"macos" / "licenses"' in spec
     assert "BUNDLE_SHORT_VERSION" in spec
     assert "BUNDLE_VERSION" in spec
+
+
+def test_PKG_bundle_short_version_is_three_numeric_components() -> None:
+    from macos.release.release_config import BUNDLE_SHORT_VERSION, BUNDLE_VERSION
+
+    assert re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", BUNDLE_SHORT_VERSION)
+    assert BUNDLE_SHORT_VERSION == "0.1.0"
+    assert BUNDLE_VERSION == "3"

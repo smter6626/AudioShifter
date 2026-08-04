@@ -8,11 +8,11 @@ from __future__ import annotations
 import argparse
 
 
-RELEASE_TAG = "v0.1.0-alpha.2"
-RELEASE_TITLE = "AudioShifter v0.1.0-alpha.2 — macOS arm64 preview"
-PYTHON_VERSION = "0.1.0a2"
-BUNDLE_SHORT_VERSION = "0.1.0-alpha.2"
-BUNDLE_VERSION = "2"
+RELEASE_TAG = "v0.1.0-alpha.3"
+RELEASE_TITLE = "AudioShifter v0.1.0-alpha.3 — macOS arm64 preview"
+PYTHON_VERSION = "0.1.0a3"
+BUNDLE_SHORT_VERSION = "0.1.0"
+BUNDLE_VERSION = "3"
 MACOS_ASSET_LABEL = "macOS27-arm64"
 
 

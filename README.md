@@ -1,7 +1,7 @@
 # AudioShifter
 
 AudioShifter 是一个完全在本机运行的音频变调与变速工具。macOS 中文 GUI
-已经完成，当前候选版本为 `v0.1.0-alpha.2`；Android 仍处于后续准备阶段。
+已经完成，当前候选版本为 `v0.1.0-alpha.3`；Android 仍处于后续准备阶段。
 
 ## macOS 应用
 
@@ -22,6 +22,35 @@ macOS 未测试，可能无法运行；不支持 Intel Mac、Rosetta 或 univers
 notarization 或 stapling。完整使用、构建、Gatekeeper 单应用放行和验证说明
 见 [macOS README](macos/README.md)。
 
+完整英文 GPLv3 可以在运行中的原生菜单打开：
+
+```text
+macOS 菜单栏 → AudioShifter → License
+```
+
+许可证入口不在主 GUI、File 或 Help 菜单中。
+
+## alpha.3 下载
+
+普通用户只需从 alpha.3 Draft 下载 App ZIP 和 `SHA256SUMS.txt`；对应源码包
+不是运行应用所必需的：
+
+```text
+AudioShifter-v0.1.0-alpha.3-macOS27-arm64.zip
+SHA256SUMS.txt
+```
+
+只校验 App ZIP：
+
+```bash
+grep 'AudioShifter-v0.1.0-alpha.3-macOS27-arm64.zip$' SHA256SUMS.txt \
+  | shasum -a 256 -c -
+```
+
+需要审计、修改或重建时，再额外下载
+`AudioShifter-v0.1.0-alpha.3-corresponding-source.tar.gz`。如果两个归档都已
+下载，可在同一目录运行 `shasum -a 256 -c SHA256SUMS.txt`。
+
 ## 许可证与品牌
 
 Copyright (C) 2026 Yeming Dai
@@ -39,6 +68,10 @@ Copyright (C) 2026 Yeming Dai
 修改版可以使用和商业分发 GPL 代码，但必须使用自己的名称、bundle
 identifier、图标和品牌，不得冒充官方 AudioShifter 版本。第三方组件继续
 适用各自许可证。
+
+品牌政策另行授予窄权限：仅为从官方 AudioShifter tag 复现未修改的官方
+构建，或原样转发官方 Release，可以按必要范围复制官方名称、图标和品牌
+资产；该权限不会把品牌资产改为 GPL，也不适用于修改版。
 
 - [LICENSE](LICENSE)：完整 GNU GPL version 3 正文。
 - [LICENSING.md](LICENSING.md)：GPL-3.0-or-later 覆盖范围与排除范围。

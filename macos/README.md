@@ -2,40 +2,51 @@
 
 AudioShifter 是一个完全在本机运行的中文音频变调与变速工具。仓库既保留 Python 源码开发入口，也提供可重复构建的 Apple Silicon `AudioShifter.app`。当前应用只在 Apple Silicon `arm64`、macOS 27 上构建和验证；旧版 macOS 未测试，可能无法运行。不承诺 Intel Mac、Rosetta 或 `universal2`。
 
-## v0.1.0-alpha.2 Release candidate
+## v0.1.0-alpha.3 Release candidate
 
-当前预览候选为 `v0.1.0-alpha.2`，Draft Release 页面：
+当前预览候选为 `v0.1.0-alpha.3`，预定 Draft Release 页面：
 
-<https://github.com/smter6626/AudioShifter/releases/tag/v0.1.0-alpha.2>
+<https://github.com/smter6626/AudioShifter/releases/tag/v0.1.0-alpha.3>
 
-正式附件名称固定为：
+Release 仍包含三个附件，但普通用户只需下载：
 
 ```text
-AudioShifter-v0.1.0-alpha.2-macOS27-arm64.zip
-AudioShifter-v0.1.0-alpha.2-corresponding-source.tar.gz
+AudioShifter-v0.1.0-alpha.3-macOS27-arm64.zip
 SHA256SUMS.txt
 ```
 
-下载三个文件后，在其所在目录校验：
+在下载目录只校验 App ZIP：
+
+```bash
+grep 'AudioShifter-v0.1.0-alpha.3-macOS27-arm64.zip$' SHA256SUMS.txt \
+  | shasum -a 256 -c -
+```
+
+需要审计、修改或重建的人再额外下载：
+
+```text
+AudioShifter-v0.1.0-alpha.3-corresponding-source.tar.gz
+```
+
+对应源码包不是运行应用所必需的。App 和对应源码两个归档均已下载时，可以
+运行完整校验：
 
 ```bash
 shasum -a 256 -c SHA256SUMS.txt
 ```
 
-二进制使用 PyInstaller ad-hoc signing，没有 Developer ID、Apple notarization 或 stapling。首次打开可能出现“Apple 无法验证 AudioShifter.app 是否包含恶意软件”。只应在确认文件来自本仓库 Release 且 SHA-256 匹配后，先尝试打开一次，再前往“系统设置 → 隐私与安全性 → 仍要打开”对该应用单独放行；不要全局关闭 Gatekeeper。
+两个归档都应显示 `OK`。
 
-对应源码附件包含该 tag 的 AudioShifter 源码、根级项目许可证和品牌政策，
-以及实际内置第三方组件的准确源码归档、Homebrew formula/receipt、构建
-证据、补丁和许可证。本候选已创建为 GitHub Draft Pre-release，等待项目
-所有者审核和非开发机人工验收；本阶段没有公开 Publish。最终附件校验值为：
+二进制使用 PyInstaller ad-hoc signing，没有 Developer ID、Apple notarization
+或 stapling。首次打开可能出现“Apple 无法验证 AudioShifter.app 是否包含
+恶意软件”。只应在确认文件来自本仓库 Release 且 SHA-256 匹配后，先尝试
+打开一次，再前往“系统设置 → 隐私与安全性 → 仍要打开”对该应用单独放行；
+不要全局关闭 Gatekeeper。
 
-```text
-d01c9a6e4fca0fd2dabfb8c27443d1c601d8c8b8e1f063b73f83ed3372c37525  AudioShifter-v0.1.0-alpha.2-macOS27-arm64.zip
-b6ab71d2ee0737329e43e42d4104ad21ad41a03c1d233817c6bceaaa3c598d0f  AudioShifter-v0.1.0-alpha.2-corresponding-source.tar.gz
-```
-
-完整的 tag 构建、上传和 Draft 下载回验证据见
-[`release/release_verification_v0.1.0-alpha.2.md`](release/release_verification_v0.1.0-alpha.2.md)。
+对应源码附件包含该 tag 的 AudioShifter 源码、项目许可证和品牌政策，以及
+实际内置第三方组件的准确源码、formula/receipt、补丁、构建证据和许可证。
+本候选只创建 Draft Pre-release，等待项目所有者审核和非开发机人工验收；
+本阶段不会公开 Publish。
 
 ## 许可证与品牌
 
@@ -53,6 +64,11 @@ Logo、应用图标和官方品牌不属于 GPL 授权。未经书面许可，�
 注明它是基于 AudioShifter 的非官方分支、与官方项目无隶属或认可关系。
 品牌政策只防止冒充官方来源，不禁止使用其他名称和品牌发布商业 GPL fork。
 
+品牌政策同时提供一项窄授权：可以按必要范围复制 AudioShifter 名称、图标和
+其他品牌资产，以从官方 tag 复现未修改的官方构建，或原样转发官方 Release。
+该授权不把品牌资产置于 GPL 下；修改版仍必须更换名称、bundle identifier、
+Logo、图标和其他来源识别品牌，除非获得事先书面许可。
+
 `windows/` 历史内容不属于本项目 GPL 授权；第三方组件继续适用各自许可证。
 
 ## 直接使用 `.app`
@@ -64,6 +80,17 @@ macos/dist/AudioShifter.app
 ```
 
 在 Finder 中双击 `AudioShifter.app` 即可启动中文 GUI。这个应用包已经内置 CPython、Tcl/Tk、FFmpeg、FFprobe、Rubber Band 和运行所需的非系统动态库；运行时无需安装或激活 Python，无需 Homebrew，也无需单独安装音频工具。
+
+完整许可证位于 macOS 顶部原生应用菜单：
+
+```text
+AudioShifter → License
+```
+
+该菜单项打开标题为 `AudioShifter License` 的非阻塞英文窗口，显示应用包内
+`Contents/Resources/LICENSE` 的完整 GPLv3 正文；窗口可调整大小、滚动、
+选择复制，并支持 Command-C 和 Command-W。主 GUI 中没有 License 按钮，
+License 也不在 File 或 Help 菜单。
 
 应用采用 PyInstaller `onedir + windowed` 结构。复制时必须保留完整 `.app` bundle 和其中的符号链接，建议使用 Finder 或：
 
@@ -92,15 +119,15 @@ macos/packaging/verify_packaged_pipeline.sh
 
 第一条命令审计应用结构、Info.plist、图标、所有 Mach-O 架构、动态载入路径、RPATH、符号链接和 ad-hoc codesign；第二条使用应用包内部工具验证四种输入、输出规格、不覆盖、源哈希、取消和清理。详细证据见 [packaging_test_report.md](packaging_test_report.md)。
 
-## 构建 alpha.2 Release 资产
+## 构建 alpha.3 Release 资产
 
 正式准备提交已推送并创建 annotated tag 后，从干净的仓库根目录运行：
 
 ```bash
-macos/release/build_release_assets.sh v0.1.0-alpha.2
+macos/release/build_release_assets.sh v0.1.0-alpha.3
 ```
 
-该命令会重新运行全部测试，从 alpha.2 tag 的 detached worktree 重建并
+该命令会重新运行全部测试，从 alpha.3 tag 的 detached worktree 重建并
 验收 `.app`，使用 `ditto` 创建 App ZIP，收集准确第三方对应源码、formula、
 receipt、patch、构建证据和许可证，并生成及验证 `SHA256SUMS.txt`。输出位于
 被精确忽略的 `macos/release-dist/`，不得提交到 Git。工具和操作细节见
@@ -172,7 +199,7 @@ macos/.venv/bin/python -m pytest macos/tests/integration
 
 - 当前 `.app` 只在 Apple Silicon `arm64`、macOS 27 上构建和验证；旧版 macOS 未测试，可能无法运行。没有 Intel、Rosetta 或 `universal2` 构建。
 - 源码运行和重新构建仍需要已验证的 Homebrew 工具链与 `macos/.venv`；已经生成的 `.app` 运行时不需要这些开发依赖。
-- 没有 Developer ID 正式签名或 Apple 公证，未生成 `.dmg`；alpha.2 仅准备 Draft Pre-release，尚未公开发布。
+- 没有 Developer ID 正式签名或 Apple 公证，未生成 `.dmg`；alpha.3 只准备 Draft Pre-release，不在本阶段公开发布。
 - 不提供批处理、任务队列、自定义输出目录、输出格式选择或元数据保留。
 - 状态按处理阶段显示，不提供缺乏依据的精确百分比。
 - 已记录实际内置依赖、准确对应源码、补丁和许可证文本；正式公开前仍需项目所有者审核 Draft 并在非开发机完成人工验收。

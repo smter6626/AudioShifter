@@ -68,6 +68,9 @@ def test_LIC_T003_brand_policy_preserves_gpl_fork_rights_without_confusion() -> 
         "Compatible with AudioShifter output",
         "commercially distribute",
         "official Release",
+        "reproduce or redistribute an unmodified official",
+        "official AudioShifter tag",
+        "narrow brand-assets permission",
     )
     assert all(value in policy for value in required)
     forbidden = ("No commercial use", "Commercial use is prohibited", "No redistribution")
@@ -75,12 +78,24 @@ def test_LIC_T003_brand_policy_preserves_gpl_fork_rights_without_confusion() -> 
     assert "Do not use the\nregistered-trademark symbol `®`" in policy
 
 
+def test_LIC_T008_brand_permission_is_narrow_and_does_not_relicense_assets() -> None:
+    licensing = (ROOT / "LICENSING.md").read_text(encoding="utf-8")
+    policy = (ROOT / "TRADEMARKS.md").read_text(encoding="utf-8")
+    assert "reproduce an unmodified\n   official build from an official AudioShifter tag" in licensing
+    assert "redistribute an\n   unmodified official Release" in licensing
+    assert "does not place those assets under the GPL" in licensing
+    assert "Modified versions and forks must replace the AudioShifter name" in policy
+    assert "commercially distribute the GPL-covered code under their own branding" in policy
+    for forbidden in ("commercial use is prohibited", "no commercial use", "must not charge"):
+        assert forbidden not in policy.lower()
+
+
 def test_LIC_T004_pyproject_uses_pep639_license_metadata() -> None:
     with (ROOT / "pyproject.toml").open("rb") as handle:
         metadata = tomllib.load(handle)
     project = metadata["project"]
     assert metadata["build-system"]["requires"] == ["setuptools>=77"]
-    assert project["version"] == "0.1.0a2"
+    assert project["version"] == "0.1.0a3"
     assert project["license"] == "GPL-3.0-or-later"
     assert set(project["license-files"]) == {
         "LICENSE",
@@ -94,18 +109,19 @@ def test_LIC_T004_pyproject_uses_pep639_license_metadata() -> None:
 
 def test_LIC_T005_release_identity_is_consistent() -> None:
     config = load_release_config()
-    assert config.RELEASE_TAG == "v0.1.0-alpha.2"
-    assert config.PYTHON_VERSION == "0.1.0a2"
-    assert config.BUNDLE_SHORT_VERSION == "0.1.0-alpha.2"
-    assert config.BUNDLE_VERSION == "2"
-    assert config.app_asset_name() == "AudioShifter-v0.1.0-alpha.2-macOS27-arm64.zip"
+    assert config.RELEASE_TAG == "v0.1.0-alpha.3"
+    assert config.PYTHON_VERSION == "0.1.0a3"
+    assert config.BUNDLE_SHORT_VERSION == "0.1.0"
+    assert config.BUNDLE_VERSION == "3"
+    assert config.app_asset_name() == "AudioShifter-v0.1.0-alpha.3-macOS27-arm64.zip"
     assert config.source_asset_name() == (
-        "AudioShifter-v0.1.0-alpha.2-corresponding-source.tar.gz"
+        "AudioShifter-v0.1.0-alpha.3-corresponding-source.tar.gz"
     )
     package_version = (ROOT / "macos" / "src" / "audioshifter" / "__init__.py").read_text(
         encoding="utf-8"
     )
-    assert '__version__ = "0.1.0a2"' in package_version
+    assert '__version__ = "0.1.0a3"' in package_version
+    assert '__display_version__ = "0.1.0-alpha.3"' in package_version
 
 
 def test_LIC_T006_principal_owned_code_and_build_tools_have_spdx_headers() -> None:

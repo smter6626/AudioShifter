@@ -76,6 +76,15 @@ make a fork appear official.
 
 ## Unmodified official releases
 
+Permission is granted to copy the AudioShifter name, icon, and other brand
+assets only as necessary to reproduce or redistribute an unmodified official
+release built from an official AudioShifter tag.
+
+This is a narrow brand-assets permission, separate from the GPL. It allows an
+official tag to be reproduced without forcing the reproducer to rename an
+otherwise unmodified official build. It does not relicense the name, logo,
+application icon, or official branding under the GPL.
+
 An official Release may be redistributed unchanged, including its original
 AudioShifter name and icon, provided that the distributor:
 
@@ -89,6 +98,11 @@ AudioShifter name and icon, provided that the distributor:
 
 This permission to relay an unchanged official Release does not authorise use
 of the brand for a modified product or a separate service.
+
+Modified versions and forks must replace the AudioShifter name, bundle
+identifier, icon, logo, and other source-identifying branding unless prior
+written permission has been obtained. They remain free to use, modify, and
+commercially distribute the GPL-covered code under their own branding.
 
 ## No prohibited GPL restrictions
 
