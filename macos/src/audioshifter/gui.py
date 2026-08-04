@@ -101,6 +101,7 @@ class AudioShifterView:
         if selected:
             self.input_path.set(selected)
             self.status.set("已选择音频，可以设置参数并开始处理。")
+            self.pitch_entry.focus_set()
 
     def start_processing(self) -> None:
         if self.controller is not None:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Protocol
@@ -57,7 +58,7 @@ class DevelopmentDependencyResolver:
 
 
 class PackagedDependencyResolver:
-    """Future PyInstaller strategy; the packaging step supplies the resource root."""
+    """Resolve tools from the PyInstaller resource root without consulting PATH."""
 
     def __init__(self, resource_root: Path) -> None:
         self._bin_dir = resource_root / "bin"
@@ -68,3 +69,25 @@ class PackagedDependencyResolver:
             ffprobe_path=validate_executable(self._bin_dir / "ffprobe", "FFprobe"),
             rubberband_path=validate_executable(self._bin_dir / "rubberband", "Rubber Band"),
         )
+
+
+def is_frozen_runtime() -> bool:
+    """Return whether PyInstaller initialized a frozen application runtime."""
+
+    return bool(getattr(sys, "frozen", False) and getattr(sys, "_MEIPASS", None))
+
+
+def packaged_resource_root() -> Path:
+    """Return PyInstaller's stable resource root for an onedir macOS bundle."""
+
+    if not is_frozen_runtime():
+        raise RuntimeError("Packaged resources are only available in a frozen runtime")
+    return Path(getattr(sys, "_MEIPASS")).resolve()
+
+
+def default_dependency_resolver() -> DependencyResolver:
+    """Select development PATH resolution or packaged resource resolution."""
+
+    if is_frozen_runtime():
+        return PackagedDependencyResolver(packaged_resource_root())
+    return DevelopmentDependencyResolver()

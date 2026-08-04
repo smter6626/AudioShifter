@@ -8,7 +8,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Callable
 
-from .dependencies import DependencyResolver, DevelopmentDependencyResolver
+from .dependencies import DependencyResolver, default_dependency_resolver
 from .errors import AppError, ErrorCode, app_error
 from .ffmpeg_adapter import FFmpegAdapter
 from .models import (
@@ -50,7 +50,7 @@ class AudioPipeline:
         resolver: DependencyResolver | None = None,
         runner: ProcessRunner | None = None,
     ) -> None:
-        self._resolver = resolver or DevelopmentDependencyResolver()
+        self._resolver = resolver or default_dependency_resolver()
         self._runner = runner or ProcessRunner()
 
     @staticmethod

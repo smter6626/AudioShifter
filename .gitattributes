@@ -1,0 +1,2 @@
+# Preserve upstream licence texts verbatim, including their original whitespace.
+macos/licenses/** -whitespace

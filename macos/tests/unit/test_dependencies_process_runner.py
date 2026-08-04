@@ -9,7 +9,14 @@ from pathlib import Path
 
 import pytest
 
-from audioshifter.dependencies import DevelopmentDependencyResolver, validate_executable
+from audioshifter.dependencies import (
+    DevelopmentDependencyResolver,
+    PackagedDependencyResolver,
+    default_dependency_resolver,
+    is_frozen_runtime,
+    packaged_resource_root,
+    validate_executable,
+)
 from audioshifter.errors import AppError, ErrorCode
 from audioshifter.models import ProcessingStage
 from audioshifter.process_runner import CancellationToken, ProcessRunner
@@ -35,6 +42,58 @@ def test_DEP_T009_development_resolver_finds_verified_tools() -> None:
     assert dependencies.ffmpeg_path.is_file()
     assert dependencies.ffprobe_path.is_file()
     assert dependencies.rubberband_path.is_file()
+
+
+def _make_executable(path: Path) -> Path:
+    path.write_text("#!/bin/sh\nexit 0\n")
+    path.chmod(0o755)
+    return path
+
+
+def test_DEP_T010_packaged_resolver_uses_only_resource_bin(tmp_path: Path) -> None:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    expected = {
+        name: _make_executable(bin_dir / name).resolve()
+        for name in ("ffmpeg", "ffprobe", "rubberband")
+    }
+    dependencies = PackagedDependencyResolver(tmp_path).resolve()
+    assert dependencies.ffmpeg_path == expected["ffmpeg"]
+    assert dependencies.ffprobe_path == expected["ffprobe"]
+    assert dependencies.rubberband_path == expected["rubberband"]
+
+
+def test_DEP_T010_frozen_factory_uses_meipass_without_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(sys, "_MEIPASS", str(tmp_path), raising=False)
+    monkeypatch.setenv("PATH", "/usr/bin:/bin")
+    assert is_frozen_runtime()
+    assert packaged_resource_root() == tmp_path.resolve()
+    assert isinstance(default_dependency_resolver(), PackagedDependencyResolver)
+
+
+def test_DEP_T010_non_frozen_factory_retains_development_mode(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delattr(sys, "frozen", raising=False)
+    monkeypatch.delattr(sys, "_MEIPASS", raising=False)
+    assert not is_frozen_runtime()
+    assert isinstance(default_dependency_resolver(), DevelopmentDependencyResolver)
+    with pytest.raises(RuntimeError, match="frozen runtime"):
+        packaged_resource_root()
+
+
+def test_DEP_T010_missing_packaged_binary_has_stable_error(tmp_path: Path) -> None:
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    _make_executable(bin_dir / "ffmpeg")
+    _make_executable(bin_dir / "ffprobe")
+    with pytest.raises(AppError) as caught:
+        PackagedDependencyResolver(tmp_path).resolve()
+    assert caught.value.code is ErrorCode.DEPENDENCY_MISSING
+    assert caught.value.details["component"] == "Rubber Band"
 
 
 def test_process_runner_success_and_stderr_capture() -> None:
