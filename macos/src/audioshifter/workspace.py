@@ -33,6 +33,10 @@ class TaskWorkspace:
     def processed_path(self) -> Path:
         return self.path / "processed.wav"
 
+    @property
+    def encoded_path(self) -> Path:
+        return self.path / "encoded.mp3"
+
     def _is_safe(self) -> bool:
         try:
             resolved = self.path.resolve(strict=False)

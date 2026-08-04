@@ -92,3 +92,21 @@ def build_request(
         speed_change_percent=parse_speed_change(speed_text),
         downloads_path=validate_downloads_path(downloads),
     )
+
+
+def validate_request(request: ProcessingRequest) -> ProcessingRequest:
+    if isinstance(request.pitch_semitones, bool) or not isinstance(request.pitch_semitones, int):
+        raise app_error(ErrorCode.INVALID_PITCH, details={"value": repr(request.pitch_semitones)})
+    if not -24 <= request.pitch_semitones <= 24:
+        raise app_error(ErrorCode.INVALID_PITCH, details={"value": request.pitch_semitones})
+    speed = request.speed_change_percent
+    if not isinstance(speed, Decimal) or not speed.is_finite():
+        raise app_error(ErrorCode.INVALID_SPEED, details={"value": repr(speed)})
+    if not Decimal("-95") <= speed <= Decimal("400"):
+        raise app_error(ErrorCode.INVALID_SPEED, details={"value": str(speed)})
+    return ProcessingRequest(
+        input_path=validate_input_path(request.input_path),
+        pitch_semitones=request.pitch_semitones,
+        speed_change_percent=Decimal(0) if speed == 0 else speed,
+        downloads_path=validate_downloads_path(request.downloads_path),
+    )

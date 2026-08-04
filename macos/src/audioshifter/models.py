@@ -67,3 +67,13 @@ class ProcessingResult:
 class ProgressEvent:
     stage: ProcessingStage
     message: str
+
+
+@dataclass(frozen=True, slots=True)
+class MediaInfo:
+    codec_name: str
+    sample_rate: int
+    channels: int
+    duration_seconds: Decimal
+    bit_rate: int | None
+    format_name: str
