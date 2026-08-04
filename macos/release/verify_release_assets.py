@@ -20,7 +20,12 @@ from release_manifest import COMPONENTS, sha256_file
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 PYTHON = REPOSITORY_ROOT / "macos/.venv/bin/python"
-FORBIDDEN_TEXT = (str(Path.home()), str(REPOSITORY_ROOT), "ghp_", "github_pat_")
+FORBIDDEN_TEXT = (
+    str(Path.home()),
+    str(REPOSITORY_ROOT),
+    "gh" + "p_",
+    "github" + "_pat_",
+)
 
 
 def run(
