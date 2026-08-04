@@ -1,14 +1,19 @@
 # macOS release tooling
 
 This directory contains the reproducible tooling and notes for
-`v0.1.0-alpha.1`. Generated applications, downloaded source archives, release
+`v0.1.0-alpha.2`. Generated applications, downloaded source archives, release
 assets, and verification caches are intentionally excluded from Git.
 
+`release_config.py` is the single source of the current tag, application
+version, Release title, and asset names. Pass the configured tag explicitly if
+desired; the script rejects a different tag instead of silently mixing
+versions.
+
 After the release preparation commit has been pushed and annotated tag
-`v0.1.0-alpha.1` points at that exact commit, run from the repository root:
+`v0.1.0-alpha.2` points at that exact commit, run from the repository root:
 
 ```bash
-macos/release/build_release_assets.sh
+macos/release/build_release_assets.sh v0.1.0-alpha.2
 ```
 
 The command reruns pytest, creates a temporary detached worktree at the release
@@ -27,6 +32,14 @@ official upstream source archive itself contains precompiled objects, the
 collector records the original checksum and excluded paths, then emits a
 source-only derivative while retaining all source and build scripts.
 
-The generated source bundle is a factual compliance aid, not legal advice.
-Public publication remains blocked while the repository has no root-level
-project licence compatible with the bundled GPL components.
+The generated source bundle is a factual compliance aid, not legal advice. It
+includes the tagged repository source, the project `LICENSE`, `LICENSING.md`
+and `TRADEMARKS.md`, exact third-party source and checksums, applicable
+Homebrew metadata and patches, and the licence texts shipped in the app.
+
+Covered AudioShifter-owned code is licensed under `GPL-3.0-or-later` as defined
+in the root `LICENSING.md`. The AudioShifter name, logo, application icon and
+official branding are excluded from that grant and governed by
+`TRADEMARKS.md`; `windows/` is also excluded. The alpha.2 GitHub Release is
+prepared only as a Draft until owner review and non-development-Mac acceptance
+are complete.

@@ -9,11 +9,14 @@ This is a factual engineering record, not legal advice.
 
 ## Distribution boundary
 
-The `v0.1.0-alpha.1` application is being prepared as a GitHub Draft Release
-with a matching corresponding-source attachment. Public publication is blocked
-because the repository does not yet have a root-level project licence. A Draft
-asset is not a representation that the project is ready for public binary
-distribution.
+The `v0.1.0-alpha.2` application is being prepared as a GitHub Draft
+Pre-release with a matching corresponding-source attachment. Covered
+AudioShifter-owned code is licensed under `GPL-3.0-or-later`, subject to the
+scope and exclusions in the root `LICENSING.md`. The AudioShifter name, logo,
+application icon and official branding are governed separately by
+`TRADEMARKS.md`; all `windows/` history is excluded from the project GPL grant.
+The Draft remains unpublished pending owner review and non-development-Mac
+acceptance.
 
 Before providing the application binary to another person, publishing it, or
 uploading it to a release service, the distributor must separately confirm and
@@ -27,13 +30,12 @@ fulfil all applicable obligations. In particular:
 - LGPL components may require notices, licence copies, corresponding source,
   and a practical relinking or replacement route, depending on the manner of
   distribution;
-- a future public binary distribution needs a documented corresponding-source
-  offer/delivery mechanism for the applicable GPL components and must review
-  whether the AudioShifter application itself is distributed on a compatible
-  licensing basis.
+- a public binary distribution must keep the version-matched corresponding
+  source attachment available for the applicable GPL components and preserve
+  all project and third-party licence materials.
 
-No Developer ID signing, notarization, commercial licence purchase, or binary
-distribution decision is made by this build step.
+No Developer ID signing, notarization, commercial licence purchase, or public
+publication decision is made by this build step.
 
 ## Runtime inventory
 
@@ -86,7 +88,7 @@ patches, and maps every packaged Mach-O to one of these components. It also
 stores sanitised bottle receipts and build evidence. The generated archive is:
 
 ```text
-AudioShifter-v0.1.0-alpha.1-corresponding-source.tar.gz
+AudioShifter-v0.1.0-alpha.2-corresponding-source.tar.gz
 ```
 
 Homebrew's independent source-oriented entry points include:
