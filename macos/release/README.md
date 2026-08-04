@@ -48,9 +48,13 @@ Ordinary users need only the app ZIP and `SHA256SUMS.txt`. They can validate
 the app without downloading corresponding source:
 
 ```bash
-grep 'AudioShifter-v0.1.0-alpha.3-macOS27-arm64.zip$' SHA256SUMS.txt \
+grep 'AudioShifter-v0.1.0-alpha.3-macOS27-arm64.zip' SHA256SUMS.txt \
+  | tr -d '\r' \
   | shasum -a 256 -c -
 ```
+
+`tr -d '\r'` keeps this check portable when `SHA256SUMS.txt` has CRLF line
+endings.
 
 The corresponding-source archive remains a required Release asset for licence
 compliance, inspection, modification, and rebuilding, but it is not required to

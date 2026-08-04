@@ -43,9 +43,12 @@ SHA256SUMS.txt
 只校验 App ZIP：
 
 ```bash
-grep 'AudioShifter-v0.1.0-alpha.3-macOS27-arm64.zip$' SHA256SUMS.txt \
+grep 'AudioShifter-v0.1.0-alpha.3-macOS27-arm64.zip' SHA256SUMS.txt \
+  | tr -d '\r' \
   | shasum -a 256 -c -
 ```
+
+`tr -d '\r'` 用于兼容可能采用 CRLF 行尾的 `SHA256SUMS.txt`。
 
 当前 alpha.3 候选保存在未公开的 GitHub Draft Pre-release，等待项目所有者
 审核和非开发机人工验收。App ZIP 的 SHA-256 为

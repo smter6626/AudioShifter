@@ -115,7 +115,8 @@ def test_release_notes_include_platform_gatekeeper_and_three_assets() -> None:
         "ordinary users do not need to download",
         "It is not required to run the app.",
         "official AudioShifter tag",
-        "grep 'AudioShifter-v0.1.0-alpha.3-macOS27-arm64.zip$' SHA256SUMS.txt",
+        "grep 'AudioShifter-v0.1.0-alpha.3-macOS27-arm64.zip' SHA256SUMS.txt",
+        "tr -d '\\r'",
     )
     assert all(value in notes for value in required)
 
@@ -135,6 +136,8 @@ def test_release_docs_do_not_require_ordinary_users_to_download_source() -> None
         assert "corresponding-source" in normalized
         assert "not required to run the app" in normalized or "不是运行应用所必需" in normalized
         assert "下载三个文件" not in normalized
+        assert "macOS27-arm64.zip$" not in text
+        assert "tr -d '\\r'" in text
 
 
 def test_release_configuration_is_the_single_alpha3_identity_source(monkeypatch) -> None:

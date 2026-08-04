@@ -243,6 +243,29 @@ It reported:
 AudioShifter-v0.1.0-alpha.3-macOS27-arm64.zip: OK
 ```
 
+### Portability correction after non-development-Mac acceptance
+
+The command above, including its trailing `$` grep anchor, passed in the build
+verification environment and is retained as the original historical record.
+On the downloaded copy used for acceptance on the non-development Mac, that
+form did not produce a checksum line that `shasum` could recognise. The ZIP and
+`SHA256SUMS.txt` assets themselves were not incorrect and were not changed.
+
+The target Mac returned `OK` with the portable public command below, which
+removes a possible carriage-return character before passing the selected line
+to `shasum`:
+
+```bash
+grep 'AudioShifter-v0.1.0-alpha.3-macOS27-arm64.zip' SHA256SUMS.txt \
+  | tr -d '\r' \
+  | shasum -a 256 -c -
+```
+
+A direct `shasum -a 256` calculation on the target Mac independently reported
+`a7866775734cbcde12d1b3d5186a09f71da71fe380650438d67a8d1f2987711d`,
+exactly matching the Draft asset record. All current public user instructions
+and the Release notes now use the portable form.
+
 All three assets were also downloaded from Draft ID `364860803` into a fresh
 ignored directory using `gh release download`. They were byte-for-byte equal
 to the local final assets. The full two-archive checksum produced two `OK`
