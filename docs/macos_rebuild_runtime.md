@@ -24,8 +24,15 @@
 - 2026-08-03：提交 `d95593c`（`docs: add macOS verification matrix`），创建中文验证矩阵 `macos/design/verification_matrix.md`，将行为合同映射为单元、集成、GUI、故障注入和打包前检查项。
 - 2026-08-03：提交 `0bf56f4`（`docs: align static contract with confirmed macOS behavior`），同步更新长期静态合同，替换旧速度语义并加入已确认的平台、参数范围、下载目录、命名、输出、单任务、取消、关闭和元数据边界。
 - 2026-08-03：提交 `7cc361e`（`docs: link macOS design contracts`），更新 `macos/README.md`，建立环境报告和三份设计合同的入口索引。
+- 2026-08-03：完成 macOS 可运行 MVP 的纯逻辑层，建立正式 `audioshifter` Python 包、不可变请求/结果模型、稳定错误码、参数与路径校验、Decimal 速度换算、固定命名、同名递增、安全临时工作区和控制层单任务保护；提交 `e7312eb`（`test: add macOS core contract tests`）。
+- 2026-08-03：完成开发/打包双策略依赖解析接口、参数数组进程执行器、非 UTF-8 诊断、进程组温和/强制取消，以及 FFmpeg 解码标准化、Rubber Band R3/finer/formant 处理、FFmpeg 320 kbps MP3 编码、FFprobe 验证和排他发布管线；提交 `85068d6`（`feat: implement macOS audio processing pipeline`）。
+- 2026-08-03：完成中文 Tkinter GUI、系统文件选择器、参数说明、阶段状态、成功/失败/冲突提示、后台线程与主线程事件队列、取消、重复启动保护和运行中关闭确认；固定源码启动入口为 `python -m audioshifter`；提交 `5e050eb`（`feat: add macOS Tkinter MVP`）。
+- 2026-08-03：完成 130 项自动化测试，其中单元/文件系统/控制层故障注入 102 项、真实管线/窗口集成 28 项，结果为 130 passed、0 failed、0 skipped；MP3、M4A、WAV、FLAC、大写扩展名、特殊字符路径、参数边界、媒体规格、时长/音高方向、源哈希、不覆盖、依赖/子进程故障、磁盘/权限注入、取消和临时清理均通过。
+- 2026-08-03：使用已安装的 computer-use 能力完成真实 UI 自检：中文窗口和系统文件选择器正常；`+3/-20` 完整处理与 Downloads FFprobe 验证通过；同参数第二次运行提示并生成 `_2`，第一份与源文件未被修改；无输入、变调小数/越界、变速含 `%`/越界、重复启动、可靠取消、运行中关闭选择继续及确认取消退出均通过。测试音频和 Downloads 输出均在取证后按明确完整路径删除。
+- 2026-08-03：更新 `macos/README.md` 并创建 `macos/mvp_test_report.md`，记录环境恢复、固定启动/测试入口、版本、覆盖矩阵、代表性 FFprobe、UI 证据、限制和最终 `PASS`；提交 `9c29670`（`test: verify macOS MVP end to end`）。
+- 2026-08-03：确认本阶段未执行 PyInstaller，未生成 `.app` 或 `.dmg`，未修改或执行 Windows 历史内容，未提交虚拟环境、测试音频、Downloads 输出或第三方二进制。
 
-# active step
+# completed step specification — macOS runnable MVP
 
 - 完成 macOS 第一阶段可运行 MVP：按照已确认的行为合同，依次建立纯逻辑模块、真实 FFmpeg/Rubber Band 音频管线、中文 Tkinter GUI 和端到端自检，使用户可以从现有虚拟环境启动程序并使用真实音频文件测试。本步骤允许编写正式业务代码、自动化测试和 GUI，也允许使用用户已手动确认可用的 computer-use/桌面控制能力执行 UI 自检；不执行 PyInstaller 打包，不生成 `.app` 或 `.dmg`，不处理签名、公证和正式分发。
 
@@ -526,6 +533,10 @@
   ```text
   使用 PyInstaller 构建并验证未签名的纯 arm64 macOS 应用包，收集 Python/Tk、FFmpeg、Rubber Band 及传递动态库，验证脱离 Homebrew 和开发虚拟环境后的独立运行能力；本步骤同时处理应用内依赖路径、Mach-O 架构、动态库重定位、最低 macOS 实测边界和许可证材料，但仍不执行 Developer ID 签名或 Apple 公证。
   ```
+
+# active step
+
+- 使用 PyInstaller 构建并验证未签名的纯 `arm64` macOS 应用包，收集 Python/Tk、FFmpeg、Rubber Band 及传递动态库，验证脱离 Homebrew 和开发虚拟环境后的独立运行能力；本步骤同时处理应用内依赖路径、Mach-O 架构、动态库重定位、最低 macOS 实测边界和许可证材料，但仍不执行 Developer ID 签名或 Apple 公证。
 
 # next steps
 
