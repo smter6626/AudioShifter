@@ -4,9 +4,10 @@ AudioShifter 是一个完全在本机运行的中文音频变调与变速工具�
 
 ## v0.1.0-alpha.3 Release candidate
 
-当前预览候选为 `v0.1.0-alpha.3`，预定 Draft Release 页面：
+当前预览候选为 `v0.1.0-alpha.3`。已认证协作者可查看未公开的 Draft
+Pre-release（database ID `364860803`）：
 
-<https://github.com/smter6626/AudioShifter/releases/tag/v0.1.0-alpha.3>
+<https://github.com/smter6626/AudioShifter/releases/tag/untagged-eb4c98469e0200c34d24>
 
 Release 仍包含三个附件，但普通用户只需下载：
 
@@ -36,6 +37,14 @@ shasum -a 256 -c SHA256SUMS.txt
 ```
 
 两个归档都应显示 `OK`。
+
+当前 Draft 附件的固定校验值为：
+
+| 附件 | 字节数 | SHA-256 |
+|---|---:|---|
+| `AudioShifter-v0.1.0-alpha.3-macOS27-arm64.zip` | 27,764,722 | `a7866775734cbcde12d1b3d5186a09f71da71fe380650438d67a8d1f2987711d` |
+| `AudioShifter-v0.1.0-alpha.3-corresponding-source.tar.gz` | 200,051,018 | `2936187f84081c322e3d43254ec2a7f829037db84dc9b7e3532fc868dd9546d2` |
+| `SHA256SUMS.txt` | 234 | `611171939727f40a008c514f6664b5d2ddd5d04b17b23827622fc8babb88d9c2` |
 
 二进制使用 PyInstaller ad-hoc signing，没有 Developer ID、Apple notarization
 或 stapling。首次打开可能出现“Apple 无法验证 AudioShifter.app 是否包含
@@ -117,7 +126,7 @@ macos/packaging/verify_app.sh
 macos/packaging/verify_packaged_pipeline.sh
 ```
 
-第一条命令审计应用结构、Info.plist、图标、所有 Mach-O 架构、动态载入路径、RPATH、符号链接和 ad-hoc codesign；第二条使用应用包内部工具验证四种输入、输出规格、不覆盖、源哈希、取消和清理。详细证据见 [packaging_test_report.md](packaging_test_report.md)。
+第一条命令审计应用结构、Info.plist、图标、所有 Mach-O 架构、动态载入路径、RPATH、符号链接和 ad-hoc codesign；第二条使用应用包内部工具验证四种输入、输出规格、不覆盖、源哈希、取消和清理。独立打包阶段证据见 [packaging_test_report.md](packaging_test_report.md)，alpha.3 的 tag 构建、Draft 上传、下载回验和 License 菜单证据见 [release_verification_v0.1.0-alpha.3.md](release/release_verification_v0.1.0-alpha.3.md)。
 
 ## 构建 alpha.3 Release 资产
 

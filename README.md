@@ -47,6 +47,10 @@ grep 'AudioShifter-v0.1.0-alpha.3-macOS27-arm64.zip$' SHA256SUMS.txt \
   | shasum -a 256 -c -
 ```
 
+当前 alpha.3 候选保存在未公开的 GitHub Draft Pre-release，等待项目所有者
+审核和非开发机人工验收。App ZIP 的 SHA-256 为
+`a7866775734cbcde12d1b3d5186a09f71da71fe380650438d67a8d1f2987711d`。
+
 需要审计、修改或重建时，再额外下载
 `AudioShifter-v0.1.0-alpha.3-corresponding-source.tar.gz`。如果两个归档都已
 下载，可在同一目录运行 `shasum -a 256 -c SHA256SUMS.txt`。
