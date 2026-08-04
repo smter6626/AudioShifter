@@ -1,11 +1,13 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Yeming Dai
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPOSITORY_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 PYTHON="$REPOSITORY_ROOT/macos/.venv/bin/python"
-TAG="v0.1.0-alpha.1"
+TAG="${1:-}"
 WORK_ROOT="$REPOSITORY_ROOT/macos/release-work"
 STAGING_DIR="$WORK_ROOT/staging"
 SOURCE_WORK="$WORK_ROOT/corresponding-source"
@@ -13,8 +15,8 @@ VERIFY_WORK="$WORK_ROOT/verification"
 TAG_TREE="$WORK_ROOT/tag-worktree"
 FINAL_DIR="$REPOSITORY_ROOT/macos/release-dist"
 APP="$REPOSITORY_ROOT/macos/dist/AudioShifter.app"
-APP_ASSET="AudioShifter-$TAG-macOS27-arm64.zip"
-SOURCE_ASSET="AudioShifter-$TAG-corresponding-source.tar.gz"
+APP_ASSET=""
+SOURCE_ASSET=""
 
 reset_exact_directory() {
   local target="$1"
@@ -50,6 +52,16 @@ if [[ ! -x "$PYTHON" ]]; then
   echo "Restore macos/.venv before building release assets." >&2
   exit 1
 fi
+CONFIGURED_TAG="$($PYTHON "$SCRIPT_DIR/release_config.py" tag)"
+if [[ -z "$TAG" ]]; then
+  TAG="$CONFIGURED_TAG"
+fi
+if [[ "$TAG" != "$CONFIGURED_TAG" ]]; then
+  echo "Requested tag $TAG does not match configured release $CONFIGURED_TAG." >&2
+  exit 1
+fi
+APP_ASSET="$($PYTHON "$SCRIPT_DIR/release_config.py" app-asset)"
+SOURCE_ASSET="$($PYTHON "$SCRIPT_DIR/release_config.py" source-asset)"
 if ! git merge-base --is-ancestor "$TAG^{commit}" HEAD; then
   echo "$TAG must be an ancestor of the release-tooling commit." >&2
   exit 1

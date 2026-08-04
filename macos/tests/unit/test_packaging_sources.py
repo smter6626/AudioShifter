@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Yeming Dai
 from __future__ import annotations
 
 from pathlib import Path
@@ -34,3 +36,12 @@ def test_PKG_icon_and_license_sources_are_committed_resources() -> None:
     assert icon.read_bytes()[:4] == b"icns"
     assert notices.is_file()
     assert any((ROOT / "macos" / "licenses").iterdir())
+
+
+def test_PKG_project_license_and_brand_sources_are_bundled_by_spec() -> None:
+    spec = (ROOT / "macos" / "packaging" / "AudioShifter.spec").read_text(encoding="utf-8")
+    for filename in ("LICENSE", "LICENSING.md", "TRADEMARKS.md", "THIRD_PARTY_NOTICES.md"):
+        assert filename in spec
+    assert '"macos" / "licenses"' in spec
+    assert "BUNDLE_SHORT_VERSION" in spec
+    assert "BUNDLE_VERSION" in spec

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Yeming Dai
 """Verify final release assets, including freshly extracted app and source."""
 
 from __future__ import annotations
@@ -16,6 +18,7 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from release_manifest import COMPONENTS, sha256_file
+from release_config import RELEASE_TAG, app_asset_name, source_asset_name
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -26,6 +29,7 @@ FORBIDDEN_TEXT = (
     "gh" + "p_",
     "github" + "_pat_",
 )
+GPL_V3_OFFICIAL_SHA256 = "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
 
 
 def run(
@@ -120,6 +124,24 @@ def verify_source(root: Path, tag: str, expected_commit: str) -> dict[str, Any]:
     manifest = json.loads((package / "MANIFEST.json").read_text(encoding="utf-8"))
     if manifest.get("release") != tag or manifest.get("release_commit") != expected_commit:
         raise RuntimeError("Corresponding-source tag or commit does not match the release")
+    expected_project_status = "GPL-3.0-or-later for covered AudioShifter-owned code"
+    if manifest.get("project_licence_status") != expected_project_status:
+        raise RuntimeError(f"Unexpected project licence status: {manifest.get('project_licence_status')}")
+    project_licensing = manifest.get("project_licensing", {})
+    if project_licensing.get("spdx_expression") != "GPL-3.0-or-later":
+        raise RuntimeError("Corresponding source lacks the GPL-3.0-or-later project grant")
+    exclusions = "\n".join(project_licensing.get("excluded", []))
+    for required in ("TRADEMARKS.md", "windows/", "third-party"):
+        if required not in exclusions:
+            raise RuntimeError(f"Corresponding source licence exclusions omit {required}")
+    project_files = project_licensing.get("files", {})
+    for name in ("LICENSE", "LICENSING.md", "TRADEMARKS.md"):
+        record = project_files.get(name, {})
+        path = package / record.get("path", "missing")
+        if not path.is_file() or sha256_file(path) != record.get("sha256"):
+            raise RuntimeError(f"Project licensing material is missing or mismatched: {name}")
+    if sha256_file(package / project_files["LICENSE"]["path"]) != GPL_V3_OFFICIAL_SHA256:
+        raise RuntimeError("Corresponding-source LICENSE is not official GPLv3 text")
     if manifest.get("component_count") != len(COMPONENTS):
         raise RuntimeError(f"Unexpected component count: {manifest.get('component_count')}")
     components = manifest.get("components", [])
@@ -172,6 +194,16 @@ def verify_source(root: Path, tag: str, expected_commit: str) -> dict[str, Any]:
         raise RuntimeError("Tagged source records the wrong tag")
     if (package / "audioshifter/git-commit.txt").read_text(encoding="utf-8").strip() != expected_commit:
         raise RuntimeError("Tagged source records the wrong commit")
+    with tempfile.TemporaryDirectory(prefix="AudioShifter-tagged-source-audit-") as temporary:
+        tagged_source = Path(temporary)
+        with tarfile.open(repository_archive, "r:gz") as archive:
+            archive.extractall(tagged_source, filter="data")
+        for name in ("LICENSE", "LICENSING.md", "TRADEMARKS.md"):
+            tagged_path = tagged_source / name
+            if not tagged_path.is_file():
+                raise RuntimeError(f"Tagged repository source omits project licensing file: {name}")
+        if sha256_file(tagged_source / "LICENSE") != GPL_V3_OFFICIAL_SHA256:
+            raise RuntimeError("Tagged repository source contains an unexpected LICENSE")
     tooling_commit = (package / "audioshifter/release-tooling-commit.txt").read_text(
         encoding="utf-8"
     ).strip()
@@ -229,7 +261,7 @@ def verify_source(root: Path, tag: str, expected_commit: str) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--assets-dir", type=Path, required=True)
-    parser.add_argument("--tag", default="v0.1.0-alpha.1")
+    parser.add_argument("--tag", default=RELEASE_TAG)
     parser.add_argument("--commit")
     parser.add_argument("--work-dir", type=Path)
     parser.add_argument("--json-output", type=Path)
@@ -238,8 +270,8 @@ def main() -> None:
     assets = args.assets_dir.resolve()
     commit = args.commit or run(("git", "rev-parse", f"{args.tag}^{{commit}}"), cwd=REPOSITORY_ROOT).stdout.decode().strip()
     expected_names = {
-        f"AudioShifter-{args.tag}-macOS27-arm64.zip",
-        f"AudioShifter-{args.tag}-corresponding-source.tar.gz",
+        app_asset_name(args.tag),
+        source_asset_name(args.tag),
         "SHA256SUMS.txt",
     }
     actual_names = {path.name for path in assets.iterdir() if path.is_file()}
@@ -263,7 +295,7 @@ def main() -> None:
     try:
         app_extract = work_parent / "app"
         app_extract.mkdir(parents=True)
-        run(("ditto", "-x", "-k", assets / f"AudioShifter-{args.tag}-macOS27-arm64.zip", app_extract))
+        run(("ditto", "-x", "-k", assets / app_asset_name(args.tag), app_extract))
         app = app_extract / "AudioShifter.app"
         app_audit_path = work_parent / "extracted-app-audit.json"
         app_audit = json.loads(
@@ -293,7 +325,7 @@ def main() -> None:
 
         source_extract = work_parent / "source"
         source_extract.mkdir()
-        with tarfile.open(assets / f"AudioShifter-{args.tag}-corresponding-source.tar.gz", "r:gz") as archive:
+        with tarfile.open(assets / source_asset_name(args.tag), "r:gz") as archive:
             archive.extractall(source_extract, filter="data")
         source_audit = verify_source(source_extract, args.tag, commit)
         result = {

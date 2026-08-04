@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Yeming Dai
 """Safe subprocess execution with process-group cancellation and diagnostics."""
 
 from __future__ import annotations

@@ -1,12 +1,35 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Yeming Dai
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "audioshifter"
-version = "0.1.0"
+version = "0.1.0a2"
 description = "AudioShifter macOS local audio pitch and tempo processor"
+readme = "README.md"
 requires-python = ">=3.11"
+authors = [
+  { name = "Yeming Dai" },
+]
+license = "GPL-3.0-or-later"
+license-files = [
+  "LICENSE",
+  "LICENSING.md",
+  "TRADEMARKS.md",
+  "macos/THIRD_PARTY_NOTICES.md",
+  "macos/licenses/*",
+]
+keywords = ["audio", "pitch-shifting", "time-stretching", "macos"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Environment :: MacOS X",
+  "Operating System :: MacOS :: MacOS X",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Multimedia :: Sound/Audio",
+]
 
 [project.scripts]
 audioshifter = "audioshifter.__main__:main"

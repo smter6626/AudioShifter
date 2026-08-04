@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Yeming Dai
 """Audit the built macOS app for architecture, linking, paths, and signing."""
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import plistlib
 import subprocess
+import sys
 from pathlib import Path
 from typing import Sequence
 
@@ -15,6 +19,13 @@ from typing import Sequence
 BUNDLE_IDENTIFIER = "io.github.smter6626.audioshifter"
 SYSTEM_PREFIXES = (Path("/System/Library"), Path("/usr/lib"))
 FORBIDDEN_LOAD_PATH_FRAGMENTS = ("/opt/homebrew", "/macos/.venv", "/Workspace/Tools/AudioShifter")
+REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPOSITORY_ROOT / "macos" / "release"))
+
+from release_config import BUNDLE_SHORT_VERSION, BUNDLE_VERSION
+
+
+GPL_V3_OFFICIAL_SHA256 = "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
 
 
 def run(args: Sequence[str | Path], *, check: bool = True) -> subprocess.CompletedProcess[bytes]:
@@ -37,6 +48,14 @@ def run(args: Sequence[str | Path], *, check: bool = True) -> subprocess.Complet
 
 def output(args: Sequence[str | Path]) -> str:
     return run(args).stdout.decode("utf-8", errors="replace")
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def is_system_path(value: str) -> bool:
@@ -143,7 +162,8 @@ def audit_app(app: Path) -> dict[str, object]:
         "CFBundleExecutable": "AudioShifter",
         "CFBundleIconFile": "AudioShifter.icns",
         "CFBundlePackageType": "APPL",
-        "CFBundleShortVersionString": "0.1.0",
+        "CFBundleShortVersionString": BUNDLE_SHORT_VERSION,
+        "CFBundleVersion": BUNDLE_VERSION,
     }
     for key, expected in expected_info.items():
         if info.get(key) != expected:
@@ -151,6 +171,29 @@ def audit_app(app: Path) -> dict[str, object]:
     icon_path = resources / str(info["CFBundleIconFile"])
     if not icon_path.is_file():
         raise FileNotFoundError(f"Configured application icon is missing: {icon_path}")
+
+    legal_paths = {
+        "LICENSE": resources / "LICENSE",
+        "LICENSING.md": resources / "LICENSING.md",
+        "TRADEMARKS.md": resources / "TRADEMARKS.md",
+        "THIRD_PARTY_NOTICES.md": resources / "THIRD_PARTY_NOTICES.md",
+        "third_party_licenses": resources / "licenses",
+    }
+    for name, path in legal_paths.items():
+        if not path.exists() or (name != "third_party_licenses" and not path.is_file()):
+            raise FileNotFoundError(f"Packaged legal material is missing: {name}: {path}")
+    if not legal_paths["third_party_licenses"].is_dir():
+        raise RuntimeError("Packaged third-party licences path is not a directory")
+    if sha256_file(legal_paths["LICENSE"]) != GPL_V3_OFFICIAL_SHA256:
+        raise RuntimeError("Packaged LICENSE is not the verified official GNU GPLv3 text")
+    licensing_text = legal_paths["LICENSING.md"].read_text(encoding="utf-8")
+    trademarks_text = legal_paths["TRADEMARKS.md"].read_text(encoding="utf-8")
+    for required in ("GPL-3.0-or-later", "windows/", "TRADEMARKS.md"):
+        if required not in licensing_text:
+            raise RuntimeError(f"Packaged LICENSING.md is missing required scope: {required}")
+    for required in ("unofficial fork", "commercially distribute", "must not impersonate"):
+        if required not in trademarks_text:
+            raise RuntimeError(f"Packaged TRADEMARKS.md is missing required rule: {required}")
 
     tool_paths = {name: frameworks / "bin" / name for name in ("ffmpeg", "ffprobe", "rubberband")}
     for name, path in tool_paths.items():
@@ -214,6 +257,8 @@ def audit_app(app: Path) -> dict[str, object]:
         "bundle_identifier": info["CFBundleIdentifier"],
         "version": info["CFBundleShortVersionString"],
         "icon": str(icon_path),
+        "legal_resources": {name: str(path) for name, path in legal_paths.items()},
+        "gpl_v3_sha256": GPL_V3_OFFICIAL_SHA256,
         "packaged_tools": {name: str(path) for name, path in tool_paths.items()},
         "macho_count": len(machos),
         "architecture": "arm64-only",

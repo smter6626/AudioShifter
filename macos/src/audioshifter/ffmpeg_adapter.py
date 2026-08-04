@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Yeming Dai
 """FFmpeg decoding/encoding and FFprobe media validation."""
 
 from __future__ import annotations

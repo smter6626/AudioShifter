@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Yeming Dai
 """Stable output naming and no-overwrite allocation."""
 
 from __future__ import annotations

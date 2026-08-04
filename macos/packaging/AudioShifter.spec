@@ -1,4 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Yeming Dai
 
 from pathlib import Path
 import sys
@@ -8,8 +10,10 @@ PACKAGING_DIR = Path(SPECPATH).resolve()
 REPOSITORY_ROOT = PACKAGING_DIR.parents[1]
 SOURCE_ROOT = REPOSITORY_ROOT / "macos" / "src"
 sys.path.insert(0, str(PACKAGING_DIR))
+sys.path.insert(0, str(REPOSITORY_ROOT / "macos" / "release"))
 
 from collect_macho_dependencies import pyinstaller_tool_binaries
+from release_config import BUNDLE_SHORT_VERSION, BUNDLE_VERSION
 
 
 analysis = Analysis(
@@ -17,6 +21,9 @@ analysis = Analysis(
     pathex=[str(SOURCE_ROOT)],
     binaries=pyinstaller_tool_binaries(),
     datas=[
+        (str(REPOSITORY_ROOT / "LICENSE"), "."),
+        (str(REPOSITORY_ROOT / "LICENSING.md"), "."),
+        (str(REPOSITORY_ROOT / "TRADEMARKS.md"), "."),
         (str(REPOSITORY_ROOT / "macos" / "THIRD_PARTY_NOTICES.md"), "."),
         (str(REPOSITORY_ROOT / "macos" / "licenses"), "licenses"),
     ],
@@ -63,10 +70,10 @@ application = BUNDLE(
     name="AudioShifter.app",
     icon=str(REPOSITORY_ROOT / "macos" / "assets" / "AudioShifter.icns"),
     bundle_identifier="io.github.smter6626.audioshifter",
-    version="0.1.0",
+    version=BUNDLE_SHORT_VERSION,
     info_plist={
         "CFBundleDevelopmentRegion": "zh_CN",
-        "CFBundleVersion": "1",
+        "CFBundleVersion": BUNDLE_VERSION,
         "LSApplicationCategoryType": "public.app-category.music",
         "NSHighResolutionCapable": True,
     },

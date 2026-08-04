@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Yeming Dai
 from __future__ import annotations
 
 import importlib.util
@@ -92,19 +94,34 @@ def test_source_filter_recognises_compiled_formats(monkeypatch) -> None:
 
 
 def test_release_notes_include_platform_gatekeeper_and_three_assets() -> None:
-    notes = (RELEASE_DIR / "release_notes_v0.1.0-alpha.1.md").read_text(encoding="utf-8")
+    notes = (RELEASE_DIR / "release_notes_v0.1.0-alpha.2.md").read_text(encoding="utf-8")
     required = (
         "macOS 27.0 build `26A5378n`",
         "Apple Silicon `arm64` only",
         "ad-hoc signing",
         "未使用 Apple Developer ID",
         "系统设置 → 隐私与安全性 → 仍要打开",
-        "AudioShifter-v0.1.0-alpha.1-macOS27-arm64.zip",
-        "AudioShifter-v0.1.0-alpha.1-corresponding-source.tar.gz",
+        "AudioShifter-v0.1.0-alpha.2-macOS27-arm64.zip",
+        "AudioShifter-v0.1.0-alpha.2-corresponding-source.tar.gz",
         "SHA256SUMS.txt",
         "shasum -a 256 -c SHA256SUMS.txt",
+        "GPL-3.0-or-later",
+        "not licensed under the GPL",
+        "commercial use and distribution",
+        "different name and icon",
     )
     assert all(value in notes for value in required)
+
+
+def test_release_configuration_is_the_single_alpha2_identity_source(monkeypatch) -> None:
+    monkeypatch.syspath_prepend(str(RELEASE_DIR))
+    config = load_module("release_config_test", "release_config.py")
+    assert config.RELEASE_TAG == "v0.1.0-alpha.2"
+    assert config.RELEASE_TITLE == "AudioShifter v0.1.0-alpha.2 — macOS arm64 preview"
+    assert config.app_asset_name() == "AudioShifter-v0.1.0-alpha.2-macOS27-arm64.zip"
+    assert config.source_asset_name() == (
+        "AudioShifter-v0.1.0-alpha.2-corresponding-source.tar.gz"
+    )
 
 
 def test_release_build_uses_ditto_and_atomic_staging() -> None:
@@ -115,6 +132,8 @@ def test_release_build_uses_ditto_and_atomic_staging() -> None:
     assert "git status --porcelain" in script
     assert "git worktree add --detach" in script
     assert "verify_release_assets.py" in script
+    assert "release_config.py" in script
+    assert 'TAG="${1:-}"' in script
 
 
 def test_release_ignore_rules_are_precise() -> None:

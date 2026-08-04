@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Yeming Dai
 """Controller-level single-task protection independent of button state."""
 
 from __future__ import annotations

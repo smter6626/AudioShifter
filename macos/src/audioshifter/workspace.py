@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Yeming Dai
 """Per-task temporary workspace with guarded cleanup."""
 
 from __future__ import annotations

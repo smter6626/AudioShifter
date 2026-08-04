@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Yeming Dai
 """Collect exact corresponding source and reproducibility evidence for a release."""
 
 from __future__ import annotations
@@ -20,10 +22,11 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from release_manifest import COMPONENTS, FORMULAE, command_output, macho_paths, map_machos, sha256_file
+from release_config import RELEASE_TAG
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
-RELEASE_VERSION = "v0.1.0-alpha.1"
+RELEASE_VERSION = RELEASE_TAG
 PYINSTALLER_VERSION = "6.21.0"
 HOMEBREW_CORE = "https://raw.githubusercontent.com/Homebrew/homebrew-core"
 FORBIDDEN_TEXT = (str(Path.home()), str(REPOSITORY_ROOT))
@@ -571,6 +574,16 @@ def main() -> None:
     }
     write_json(package_root / "homebrew" / "dependency-graph" / "runtime-dependencies.json", dependency_graph)
     shutil.copytree(REPOSITORY_ROOT / "macos/licenses", package_root / "licenses")
+    project_licensing_root = package_root / "project-licensing"
+    project_licensing_root.mkdir()
+    project_licensing_files: dict[str, dict[str, str]] = {}
+    for name in ("LICENSE", "LICENSING.md", "TRADEMARKS.md"):
+        destination = project_licensing_root / name
+        shutil.copy2(REPOSITORY_ROOT / name, destination)
+        project_licensing_files[name] = {
+            "path": destination.relative_to(package_root).as_posix(),
+            "sha256": sha256_file(destination),
+        }
 
     component_records: list[dict[str, Any]] = []
     for component in COMPONENTS:
@@ -602,7 +615,19 @@ def main() -> None:
         "release_tooling_commit": head_commit,
         "generated_at_utc": dt.datetime.now(tz=dt.timezone.utc).isoformat(),
         "scope": "Corresponding source and build evidence for the embedded non-Apple runtime components",
-        "project_licence_status": "MISSING — public publication blocked pending owner decision",
+        "project_licence_status": "GPL-3.0-or-later for covered AudioShifter-owned code",
+        "project_licensing": {
+            "copyright_holder": "Yeming Dai",
+            "copyright": "Copyright (C) 2026 Yeming Dai",
+            "spdx_expression": "GPL-3.0-or-later",
+            "covered": "AudioShifter-owned macOS/mobile/shared code, tests, build and release tools, and related documentation",
+            "excluded": [
+                "AudioShifter name, logo, application icon, and official branding; governed by TRADEMARKS.md",
+                "windows/ historical content",
+                "third-party components; governed by their respective licences",
+            ],
+            "files": project_licensing_files,
+        },
         "audioshifter_source": {
             "archive": repository_archive.relative_to(package_root).as_posix(),
             "sha256": sha256_file(repository_archive),
@@ -634,8 +659,10 @@ The exact release-asset generator used for this archive is copied under
 `audioshifter/release-tooling-commit.txt`. It may post-date the application tag;
 the application code and repository source snapshot remain fixed at the tag above.
 
-AudioShifter currently has no root-level project licence; accordingly the GitHub
-Release must remain a Draft until the owner selects a compatible licence.
+Covered AudioShifter-owned code is licensed under GPL-3.0-or-later as described
+in `project-licensing/LICENSING.md`. The AudioShifter name, logo, icon, and
+official branding are excluded and governed by `project-licensing/TRADEMARKS.md`;
+`windows/` is excluded; third-party components retain their respective licences.
 """,
         encoding="utf-8",
     )
