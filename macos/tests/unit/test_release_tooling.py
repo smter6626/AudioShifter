@@ -81,6 +81,16 @@ def test_formula_patch_parsing_captures_local_and_verified_remote(monkeypatch) -
     )
 
 
+def test_source_filter_recognises_compiled_formats(monkeypatch) -> None:
+    monkeypatch.syspath_prepend(str(RELEASE_DIR))
+    collector = load_module("release_binary_filter_test", "collect_corresponding_source.py")
+    assert collector.is_compiled_magic(b"\x7fELF\x02\x01\x01\x00")
+    assert collector.is_compiled_magic(b"\xcf\xfa\xed\xfe\x0c\x00\x00\x01")
+    assert collector.is_compiled_magic(b"MZ\x90\x00\x03\x00\x00\x00")
+    assert collector.is_compiled_magic(b"!<arch>\n")
+    assert not collector.is_compiled_magic(b"#!/bin/sh")
+
+
 def test_release_notes_include_platform_gatekeeper_and_three_assets() -> None:
     notes = (RELEASE_DIR / "release_notes_v0.1.0-alpha.1.md").read_text(encoding="utf-8")
     required = (
@@ -103,6 +113,7 @@ def test_release_build_uses_ditto_and_atomic_staging() -> None:
     assert "zip -r" not in script
     assert "release-work/staging" not in script  # built from anchored variables
     assert "git status --porcelain" in script
+    assert "git worktree add --detach" in script
     assert "verify_release_assets.py" in script
 
 

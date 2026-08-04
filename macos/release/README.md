@@ -11,15 +11,21 @@ After the release preparation commit has been pushed and annotated tag
 macos/release/build_release_assets.sh
 ```
 
-The command reruns pytest, rebuilds and audits `AudioShifter.app`, creates the
-app ZIP with `ditto`, collects exact corresponding source and Homebrew build
-metadata, verifies freshly extracted copies, and atomically publishes the
-three local assets into `macos/release-dist/`.
+The command reruns pytest, creates a temporary detached worktree at the release
+tag, rebuilds and audits `AudioShifter.app` from that tag, creates the app ZIP
+with `ditto`, collects exact corresponding source and Homebrew build metadata,
+verifies freshly extracted copies, and atomically publishes the three local
+assets into `macos/release-dist/`. The temporary tag worktree uses the existing
+development virtual environment only as a build tool; it is not copied into the
+application or either release archive.
 
 The source collector uses installed Homebrew SBOMs and receipts as version and
 checksum authority. It fetches the matching historical homebrew-core formula
 revision, includes local and remote formula patches, and rejects a source
-download whose SHA-256 does not match the installed package metadata.
+download whose SHA-256 does not match the installed package metadata. If an
+official upstream source archive itself contains precompiled objects, the
+collector records the original checksum and excluded paths, then emits a
+source-only derivative while retaining all source and build scripts.
 
 The generated source bundle is a factual compliance aid, not legal advice.
 Public publication remains blocked while the repository has no root-level

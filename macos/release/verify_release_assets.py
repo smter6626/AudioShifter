@@ -139,6 +139,12 @@ def verify_source(root: Path, tag: str, expected_commit: str) -> dict[str, Any]:
                 raise RuntimeError(f"Source archive missing or mismatched: {source_path}")
             if source.get("expected_source_sha256") and source["source_sha256"] != source["expected_source_sha256"]:
                 raise RuntimeError(f"Source formula checksum mismatch: {source_path}")
+            if (
+                source.get("expected_upstream_archive_sha256")
+                and source.get("upstream_archive_sha256")
+                != source["expected_upstream_archive_sha256"]
+            ):
+                raise RuntimeError(f"Upstream formula checksum mismatch: {source_path}")
             source_archives += 1
             for field in ("formula_file", "formula_commit_evidence", "receipt", "sbom", "build_options"):
                 value = source.get(field)
@@ -161,6 +167,13 @@ def verify_source(root: Path, tag: str, expected_commit: str) -> dict[str, Any]:
         raise RuntimeError("Tagged source records the wrong tag")
     if (package / "audioshifter/git-commit.txt").read_text(encoding="utf-8").strip() != expected_commit:
         raise RuntimeError("Tagged source records the wrong commit")
+    tooling_commit = (package / "audioshifter/release-tooling-commit.txt").read_text(
+        encoding="utf-8"
+    ).strip()
+    if manifest.get("release_tooling_commit") != tooling_commit:
+        raise RuntimeError("Release tooling commit evidence differs from MANIFEST")
+    if not (package / "audioshifter/build-scripts/build_release_assets.sh").is_file():
+        raise RuntimeError("Exact release build scripts are absent from corresponding source")
 
     binary_candidate_suffixes = {".dylib", ".so", ".a", ".o", ".exe", ".dll"}
     for archive_path in (package / "third-party").rglob("*"):
@@ -203,6 +216,7 @@ def verify_source(root: Path, tag: str, expected_commit: str) -> dict[str, Any]:
         "patch_count": patch_count,
         "internal_checksum_count": internal_count,
         "release_commit": expected_commit,
+        "release_tooling_commit": tooling_commit,
         "tag": tag,
     }
 

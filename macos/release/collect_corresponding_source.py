@@ -131,6 +131,64 @@ def verify_source_archive(path: Path) -> None:
         )
 
 
+def is_compiled_magic(value: bytes) -> bool:
+    signatures = (
+        b"\x7fELF",
+        b"MZ",
+        b"!<arch>\n",
+        b"\x00asm",
+        b"BC\xc0\xde",
+        b"\xca\xfe\xba\xbe",
+        b"\xbe\xba\xfe\xca",
+        b"\xca\xfe\xba\xbf",
+        b"\xbf\xba\xfe\xca",
+        b"\xfe\xed\xfa\xce",
+        b"\xce\xfa\xed\xfe",
+        b"\xfe\xed\xfa\xcf",
+        b"\xcf\xfa\xed\xfe",
+    )
+    return any(value.startswith(signature) for signature in signatures)
+
+
+def filter_upstream_binaries(
+    archive_path: Path,
+) -> tuple[Path, tuple[str, ...]]:
+    with tarfile.open(archive_path, "r:*") as archive:
+        compiled: list[str] = []
+        for member in archive.getmembers():
+            if not member.isfile():
+                continue
+            handle = archive.extractfile(member)
+            if handle is not None and is_compiled_magic(handle.read(8)):
+                compiled.append(member.name)
+    if not compiled:
+        return archive_path, ()
+
+    if ".tar" in archive_path.name:
+        stem = archive_path.name.split(".tar", 1)[0]
+    else:
+        stem = archive_path.stem
+    filtered = archive_path.with_name(f"{stem}-source-only.tar.gz")
+    with tempfile.TemporaryDirectory(prefix="source-filter-", dir=archive_path.parent) as temporary:
+        extracted = Path(temporary) / "extracted"
+        extracted.mkdir()
+        with tarfile.open(archive_path, "r:*") as archive:
+            archive.extractall(extracted, filter="data")
+        for relative in compiled:
+            candidate = extracted / relative
+            if candidate.is_file():
+                candidate.unlink()
+        roots = tuple(extracted.iterdir())
+        if not roots:
+            raise RuntimeError(f"Source filter removed the entire archive: {archive_path}")
+        with tarfile.open(filtered, "w:gz", format=tarfile.PAX_FORMAT) as archive:
+            for root in roots:
+                archive.add(root, arcname=root.name, recursive=True)
+    archive_path.unlink()
+    verify_source_archive(filtered)
+    return filtered, tuple(sorted(compiled))
+
+
 def source_package(sbom: dict[str, Any], formula: str) -> dict[str, Any]:
     for package in sbom.get("packages", []):
         if package.get("name") == formula:
@@ -275,7 +333,9 @@ def collect_formula(
     else:
         filename = archive_name(url, f"{formula}-{version}.tar.gz")
     source_path = source_directory / filename
-    actual_sha = download(url, source_path, expected_sha)
+    upstream_sha = download(url, source_path, expected_sha)
+    source_path, excluded_prebuilt = filter_upstream_binaries(source_path)
+    actual_sha = sha256_file(source_path)
 
     patch_paths: list[str] = []
     for relative in local_formula_patches(formula_text):
@@ -296,7 +356,10 @@ def collect_formula(
         "source_url": url,
         "source_archive": source_path.relative_to(root).as_posix(),
         "source_sha256": actual_sha,
-        "expected_source_sha256": expected_sha,
+        "expected_source_sha256": expected_sha if not excluded_prebuilt else None,
+        "upstream_archive_sha256": upstream_sha,
+        "expected_upstream_archive_sha256": expected_sha,
+        "excluded_upstream_prebuilt_files": excluded_prebuilt,
         "formula_file": formula_file.relative_to(root).as_posix(),
         "formula_commit": commit,
         "formula_commit_evidence": commit_file.relative_to(root).as_posix(),
@@ -359,6 +422,7 @@ def collect_pyinstaller(root: Path) -> dict[str, Any]:
         "source_sha256": actual,
         "expected_source_sha256": None,
         "upstream_archive_sha256": upstream_sha,
+        "expected_upstream_archive_sha256": None,
         "upstream_tag": tag,
         "upstream_commit": commit,
         "excluded_upstream_prebuilt_files": sorted(excluded_prebuilt),
@@ -373,7 +437,12 @@ def collect_pyinstaller(root: Path) -> dict[str, Any]:
     }
 
 
-def collect_build_evidence(root: Path, app: Path, mapping: dict[str, tuple[str, ...]]) -> None:
+def collect_build_evidence(
+    root: Path,
+    app: Path,
+    mapping: dict[str, tuple[str, ...]],
+    release_tag: str,
+) -> None:
     evidence = root / "build-evidence"
     evidence.mkdir(parents=True)
     commands = {
@@ -385,7 +454,8 @@ def collect_build_evidence(root: Path, app: Path, mapping: dict[str, tuple[str, 
         "python-version.txt": (REPOSITORY_ROOT / "macos/.venv/bin/python", "--version"),
         "macos-version.txt": ("sw_vers",),
         "host-architecture.txt": ("uname", "-m"),
-        "git-show.txt": ("git", "show", "-s", "--format=fuller", "HEAD"),
+        "release-tag-git-show.txt": ("git", "show", "-s", "--format=fuller", release_tag),
+        "release-tooling-git-show.txt": ("git", "show", "-s", "--format=fuller", "HEAD"),
     }
     for name, command in commands.items():
         (evidence / name).write_text(sanitize(text_output(command)), encoding="utf-8")
@@ -443,10 +513,15 @@ def main() -> None:
         raise FileNotFoundError(f"Built app is missing: {app}")
     tag_commit = text_output(("git", "rev-parse", f"{args.tag}^{{commit}}"), cwd=REPOSITORY_ROOT).strip()
     head_commit = text_output(("git", "rev-parse", "HEAD"), cwd=REPOSITORY_ROOT).strip()
-    if tag_commit != head_commit:
-        raise RuntimeError(f"Release tag {args.tag}={tag_commit} does not match HEAD={head_commit}")
     if text_output(("git", "status", "--porcelain"), cwd=REPOSITORY_ROOT):
-        raise RuntimeError("Corresponding source must be generated from a clean tagged worktree")
+        raise RuntimeError("Corresponding source must be generated from a clean worktree")
+    ancestor = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", tag_commit, head_commit],
+        cwd=REPOSITORY_ROOT,
+        check=False,
+    )
+    if ancestor.returncode:
+        raise RuntimeError(f"Release tag {args.tag} is not an ancestor of release tooling HEAD")
 
     work_parent = args.work_dir.resolve()
     work_parent.mkdir(parents=True, exist_ok=True)
@@ -465,6 +540,14 @@ def main() -> None:
     run(("git", "archive", "--format=tar.gz", f"--output={repository_archive}", args.tag), cwd=REPOSITORY_ROOT)
     (audioshifter / "git-commit.txt").write_text(tag_commit + "\n", encoding="utf-8")
     (audioshifter / "git-tag.txt").write_text(args.tag + "\n", encoding="utf-8")
+    (audioshifter / "release-tooling-commit.txt").write_text(head_commit + "\n", encoding="utf-8")
+    build_scripts = audioshifter / "build-scripts"
+    for relative in text_output(("git", "ls-files", "macos/release"), cwd=REPOSITORY_ROOT).splitlines():
+        source = REPOSITORY_ROOT / relative
+        if source.is_file():
+            destination = build_scripts / Path(relative).name
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination)
 
     mapping = map_machos(app)
     formula_records: dict[str, dict[str, Any]] = {}
@@ -476,7 +559,7 @@ def main() -> None:
             package_root / "third-party" / component_key,
         )
     pyinstaller_record = collect_pyinstaller(package_root)
-    collect_build_evidence(package_root, app, mapping)
+    collect_build_evidence(package_root, app, mapping, args.tag)
 
     dependency_graph = {
         formula: json.loads(
@@ -516,6 +599,7 @@ def main() -> None:
     manifest = {
         "release": args.tag,
         "release_commit": tag_commit,
+        "release_tooling_commit": head_commit,
         "generated_at_utc": dt.datetime.now(tz=dt.timezone.utc).isoformat(),
         "scope": "Corresponding source and build evidence for the embedded non-Apple runtime components",
         "project_licence_status": "MISSING — public publication blocked pending owner decision",
@@ -544,6 +628,11 @@ tagged AudioShifter repository source plus exact third-party source archives,
 licences, historical Homebrew formulae, receipts, applicable patches, and build
 evidence for the embedded runtime components. Verify every file with the internal
 `SHA256SUMS.txt`. This package is a factual compliance aid, not legal advice.
+
+The exact release-asset generator used for this archive is copied under
+`audioshifter/build-scripts/` and identified by
+`audioshifter/release-tooling-commit.txt`. It may post-date the application tag;
+the application code and repository source snapshot remain fixed at the tag above.
 
 AudioShifter currently has no root-level project licence; accordingly the GitHub
 Release must remain a Draft until the owner selects a compatible licence.
