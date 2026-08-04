@@ -1,2 +1,3 @@
 # Install with the Homebrew Python 3.11 virtual environment documented in environment_report.md.
 PyInstaller==6.21.0
+pytest==8.4.2
