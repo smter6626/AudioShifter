@@ -26,6 +26,15 @@ shasum -a 256 -c SHA256SUMS.txt
 
 对应源码附件包含该 tag 的 AudioShifter 源码，以及实际内置第三方组件的准确源码归档、Homebrew formula/receipt、构建证据、补丁和许可证。当前仓库尚无根级项目许可证；在项目所有者明确选择与内置 GPL 组件兼容的项目许可证前，Release 只能保持 Draft，不能公开发布。
 
+当前 GitHub Draft 已通过 `gh` 上传并完成下载回验，但未向公众发布。最终候选附件哈希为：
+
+```text
+18b2d96b0802f5afb800b3ee6926e3a31b4bc9fecedbcd06182c266ca130d788  AudioShifter-v0.1.0-alpha.1-macOS27-arm64.zip
+a24e83225522dbc193e6a800625ce0f1652f03317693cce2064ada7a272f8340  AudioShifter-v0.1.0-alpha.1-corresponding-source.tar.gz
+```
+
+在许可证门槛解决并正式发布前，未登录的公众无法从 Draft Release 下载这些文件。完整构建、源码、上传和下载回验证据见 [`release/release_verification_v0.1.0-alpha.1.md`](release/release_verification_v0.1.0-alpha.1.md)。
+
 ## 直接使用 `.app`
 
 本地构建产物位于：
