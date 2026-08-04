@@ -2,12 +2,11 @@
 
 AudioShifter 是一个完全在本机运行的中文音频变调与变速工具。仓库既保留 Python 源码开发入口，也提供可重复构建的 Apple Silicon `AudioShifter.app`。当前应用只在 Apple Silicon `arm64`、macOS 27 上构建和验证；旧版 macOS 未测试，可能无法运行。不承诺 Intel Mac、Rosetta 或 `universal2`。
 
-## v0.1.0-alpha.3 Release candidate
+## v0.1.0-alpha.3 Public Pre-release
 
-当前预览候选为 `v0.1.0-alpha.3`。已认证协作者可查看未公开的 Draft
-Pre-release（database ID `364860803`）：
+当前公开预览版为 `v0.1.0-alpha.3`（Release database ID `364860803`）：
 
-<https://github.com/smter6626/AudioShifter/releases/tag/untagged-eb4c98469e0200c34d24>
+<https://github.com/smter6626/AudioShifter/releases/tag/v0.1.0-alpha.3>
 
 Release 仍包含三个附件，但普通用户只需下载：
 
@@ -41,7 +40,7 @@ shasum -a 256 -c SHA256SUMS.txt
 
 两个归档都应显示 `OK`。
 
-当前 Draft 附件的固定校验值为：
+当前公开附件的固定校验值为：
 
 | 附件 | 字节数 | SHA-256 |
 |---|---:|---|
@@ -57,8 +56,8 @@ shasum -a 256 -c SHA256SUMS.txt
 
 对应源码附件包含该 tag 的 AudioShifter 源码、项目许可证和品牌政策，以及
 实际内置第三方组件的准确源码、formula/receipt、补丁、构建证据和许可证。
-本候选只创建 Draft Pre-release，等待项目所有者审核和非开发机人工验收；
-本阶段不会公开 Publish。
+本版本已在非开发 Apple Silicon Mac 完成 ZIP 下载、SHA-256、解压、
+Gatekeeper 单应用放行、启动和实际使用验收，并已公开为 GitHub Pre-release。
 
 ## 许可证与品牌
 
@@ -129,7 +128,7 @@ macos/packaging/verify_app.sh
 macos/packaging/verify_packaged_pipeline.sh
 ```
 
-第一条命令审计应用结构、Info.plist、图标、所有 Mach-O 架构、动态载入路径、RPATH、符号链接和 ad-hoc codesign；第二条使用应用包内部工具验证四种输入、输出规格、不覆盖、源哈希、取消和清理。独立打包阶段证据见 [packaging_test_report.md](packaging_test_report.md)，alpha.3 的 tag 构建、Draft 上传、下载回验和 License 菜单证据见 [release_verification_v0.1.0-alpha.3.md](release/release_verification_v0.1.0-alpha.3.md)。
+第一条命令审计应用结构、Info.plist、图标、所有 Mach-O 架构、动态载入路径、RPATH、符号链接和 ad-hoc codesign；第二条使用应用包内部工具验证四种输入、输出规格、不覆盖、源哈希、取消和清理。独立打包阶段证据见 [packaging_test_report.md](packaging_test_report.md)，alpha.3 的 tag 构建、Draft/公开下载回验和 License 菜单证据见 [release_verification_v0.1.0-alpha.3.md](release/release_verification_v0.1.0-alpha.3.md)。
 
 ## 构建 alpha.3 Release 资产
 
@@ -211,10 +210,10 @@ macos/.venv/bin/python -m pytest macos/tests/integration
 
 - 当前 `.app` 只在 Apple Silicon `arm64`、macOS 27 上构建和验证；旧版 macOS 未测试，可能无法运行。没有 Intel、Rosetta 或 `universal2` 构建。
 - 源码运行和重新构建仍需要已验证的 Homebrew 工具链与 `macos/.venv`；已经生成的 `.app` 运行时不需要这些开发依赖。
-- 没有 Developer ID 正式签名或 Apple 公证，未生成 `.dmg`；alpha.3 只准备 Draft Pre-release，不在本阶段公开发布。
+- 没有 Developer ID 正式签名或 Apple 公证，未生成 `.dmg`；alpha.3 以 ad-hoc signing 公开为 GitHub Pre-release。
 - 不提供批处理、任务队列、自定义输出目录、输出格式选择或元数据保留。
 - 状态按处理阶段显示，不提供缺乏依据的精确百分比。
-- 已记录实际内置依赖、准确对应源码、补丁和许可证文本；正式公开前仍需项目所有者审核 Draft 并在非开发机完成人工验收。
+- 已记录实际内置依赖、准确对应源码、补丁和许可证文本；项目所有者审核与非开发机人工验收已经完成。
 
 ## 设计与合同
 

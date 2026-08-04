@@ -1,15 +1,17 @@
-# AudioShifter v0.1.0-alpha.3 Draft verification
+# AudioShifter v0.1.0-alpha.3 Release verification
 
-## Final status
+## Current final status
 
 ```text
-PARTIAL — v0.1.0-alpha.3 Draft prepared; awaiting user review and manual non-development-Mac acceptance
+PASS — v0.1.0-alpha.3 manually accepted and publicly released as a GitHub Pre-release
 ```
 
-All automated, packaging, corresponding-source, native-menu, upload, and
-download-back checks passed. The GitHub Release remains a Draft and was not
-published. The remaining action is the project owner's review and manual
-acceptance on a non-development Apple Silicon Mac.
+All automated, packaging, corresponding-source, native-menu, upload,
+download-back, and public download checks passed. The earlier Draft-preparation
+status was `PARTIAL — v0.1.0-alpha.3 Draft prepared; awaiting user review and
+manual non-development-Mac acceptance`. The owner subsequently completed that
+acceptance, and the same Release ID and assets were published without a rebuild,
+tag move, replacement, deletion, or re-upload.
 
 ## Version and legal viewer
 
@@ -76,8 +78,8 @@ open left exactly one licence window. No Accessibility permission or system
 privacy/security setting was requested or changed.
 
 This is direct visual and accessibility evidence from the final packaged app,
-not an inference from unit tests. The final user acceptance on a separate,
-non-development Mac remains intentionally pending.
+not an inference from unit tests. The subsequent user acceptance on a separate,
+non-development Mac passed.
 
 ## Licensing and branding
 
@@ -96,7 +98,7 @@ non-development Mac remains intentionally pending.
 The final app contains `LICENSE`, `LICENSING.md`, `TRADEMARKS.md`,
 `THIRD_PARTY_NOTICES.md`, and `licenses/` in `Contents/Resources`.
 
-## Git and GitHub Draft
+## Git and GitHub Draft preparation (historical record)
 
 - Release tag: `v0.1.0-alpha.3`.
 - Release/application/tooling commit:
@@ -106,7 +108,8 @@ The final app contains `LICENSE`, `LICENSING.md`, `TRADEMARKS.md`,
 - Draft URL (authenticated collaborators only):
   <https://github.com/smter6626/AudioShifter/releases/tag/untagged-eb4c98469e0200c34d24>
 - Title: `AudioShifter v0.1.0-alpha.3 — macOS arm64 preview`.
-- State: Draft = `true`, Pre-release = `true`, published time = `null`.
+- State at Draft verification time: Draft = `true`, Pre-release = `true`,
+  published time = `null`.
 - Creation, upload, inspection, and download path: authenticated GitHub CLI.
 
 The remote annotated tag resolves to the exact release commit. The app and
@@ -275,7 +278,7 @@ codesign, Mach-O, dynamic paths, symlinks, restricted launch, four formats,
 conflict, cancellation, corresponding-source MANIFEST, patches, and all
 internal hashes passed.
 
-## Tests, Gatekeeper, compatibility, and remaining acceptance
+## Tests, Gatekeeper, compatibility, and publication
 
 Automated result:
 
@@ -293,7 +296,17 @@ The application is built and verified only on Apple Silicon arm64, macOS 27.0
 build `26A5378n`. Older macOS releases are untested and may not run. Intel Mac,
 Rosetta, and universal2 are unsupported.
 
-The Draft must remain unpublished until the project owner reviews it and
-performs manual acceptance on a non-development Mac. No Developer ID signing,
-notarization, stapling, DMG, public Release publication, alpha.1/alpha.2
-mutation, Windows modification, or Android active-step change occurred.
+The required project-owner review and non-development-Mac acceptance completed
+successfully. Draft database ID `364860803` was published at
+`2026-08-04T13:39:17Z` as a Pre-release at:
+
+<https://github.com/smter6626/AudioShifter/releases/tag/v0.1.0-alpha.3>
+
+A fresh public `gh release download` returned the same three byte sizes and
+digests. The portable App-only command returned `OK`; the complete checksum
+file returned `OK` for both archives; direct SHA-256 calculations matched the
+fixed records. An unauthenticated HTTP request to the public Release URL
+returned HTTP 200.
+
+No Developer ID signing, notarization, stapling, DMG, alpha.1/alpha.2 mutation,
+Windows modification, or Android active-step change occurred.

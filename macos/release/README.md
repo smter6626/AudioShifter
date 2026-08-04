@@ -40,9 +40,9 @@ Homebrew metadata and patches, and the licence texts shipped in the app.
 Covered AudioShifter-owned code is licensed under `GPL-3.0-or-later` as defined
 in the root `LICENSING.md`. The AudioShifter name, logo, application icon and
 official branding are excluded from that grant and governed by
-`TRADEMARKS.md`; `windows/` is also excluded. The alpha.3 GitHub Release is
-prepared only as a Draft until owner review and non-development-Mac acceptance
-are complete.
+`TRADEMARKS.md`; `windows/` is also excluded. After owner review and
+non-development-Mac acceptance, the existing alpha.3 Draft was published as a
+GitHub Pre-release without rebuilding or replacing any asset.
 
 Ordinary users need only the app ZIP and `SHA256SUMS.txt`. They can validate
 the app without downloading corresponding source:

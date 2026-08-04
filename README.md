@@ -1,7 +1,7 @@
 # AudioShifter
 
 AudioShifter 是一个完全在本机运行的音频变调与变速工具。macOS 中文 GUI
-已经完成，当前候选版本为 `v0.1.0-alpha.3`；Android 仍处于后续准备阶段。
+已经完成，当前公开 Pre-release 为 `v0.1.0-alpha.3`；Android 仍处于后续准备阶段。
 
 ## macOS 应用
 
@@ -32,8 +32,8 @@ macOS 菜单栏 → AudioShifter → License
 
 ## alpha.3 下载
 
-普通用户只需从 alpha.3 Draft 下载 App ZIP 和 `SHA256SUMS.txt`；对应源码包
-不是运行应用所必需的：
+普通用户只需从 [alpha.3 Public GitHub Pre-release](https://github.com/smter6626/AudioShifter/releases/tag/v0.1.0-alpha.3)
+下载 App ZIP 和 `SHA256SUMS.txt`；对应源码包不是运行应用所必需的：
 
 ```text
 AudioShifter-v0.1.0-alpha.3-macOS27-arm64.zip
@@ -50,8 +50,8 @@ grep 'AudioShifter-v0.1.0-alpha.3-macOS27-arm64.zip' SHA256SUMS.txt \
 
 `tr -d '\r'` 用于兼容可能采用 CRLF 行尾的 `SHA256SUMS.txt`。
 
-当前 alpha.3 候选保存在未公开的 GitHub Draft Pre-release，等待项目所有者
-审核和非开发机人工验收。App ZIP 的 SHA-256 为
+alpha.3 已在非开发 Apple Silicon Mac 完成人工验收并公开为 GitHub
+Pre-release。App ZIP 的 SHA-256 为
 `a7866775734cbcde12d1b3d5186a09f71da71fe380650438d67a8d1f2987711d`。
 
 需要审计、修改或重建时，再额外下载
@@ -99,5 +99,5 @@ identifier、图标和品牌，不得冒充官方 AudioShifter 版本。第三�
 - [macOS 复刻执行状态](docs/macos_rebuild_runtime.md)
 - [Windows 原始目录盘点](docs/map_win_8.2.md)
 
-本 Git 仓库不提交构建后的 `.app`、Release 压缩包或第三方二进制；候选
+本 Git 仓库不提交构建后的 `.app`、Release 压缩包或第三方二进制；正式
 Release 资产由已提交的可重复构建和源码收集工具生成。
